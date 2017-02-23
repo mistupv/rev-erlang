@@ -62,6 +62,7 @@ eval_step({Gamma,Procs},forward) ->
   {Pid,{Env,Exp},Mail} = hd(Procs),
 
   case cerl:type(Exp) of
+    literal -> {Gamma,[{Pid,{Env,Exp},Mail}]};
     apply -> 
       ApplyOp = cerl:apply_op(Exp),
       ApplyArgs = cerl:apply_args(Exp),
@@ -85,11 +86,13 @@ eval_step({Gamma,Procs},forward) ->
                                       cerl:case_clauses(Exp)),
           {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
         false ->
-          CaseClauses = cerl:case_clauses()
-      end  
-      
-  end;
+          CaseClauses = cerl:case_clauses(Exp),
+          
+          {NewEnv,NewExp} = match(CaseArg,CaseClauses),
+          {Gamma,[{Pid,{Env++NewEnv,NewExp},Mail}]}
 
+      end
+  end;
 eval_step({Gamma,Procs},backward) ->
   {Gamma,Procs}.
 
@@ -106,6 +109,33 @@ is_exp(Exp) ->
 eval_exp(Env,Exp) -> 
   case cerl:type(Exp) of
     var -> {Env,hd([Val || {Var,Val} <- Env, Var == Exp])};
-    _ -> {Env,Exp}
+    cons -> 
+      case is_exp(cerl:cons_hd(Exp)) of
+        true -> eval_exp(Env,cerl:cons_hd(Exp));
+        false -> eval_exp(Env,cerl:cons_tl(Exp))
+      end;
+    tuples -> eval_exp_list(Env,cerl:tuples_es(Exp));
+    values -> eval_exp_list(Env,cerl:values_es(Exp))
   end.
 
+eval_exp_list(Env,[Exp|Exps]) ->
+  case is_exp(Exp) of
+    true ->
+      {NewEnv,NewExp} = eval_exp(Env,Exp),
+      {NewEnv,[NewExp|Exps]};
+    false ->
+      {Env,[Exp|eval_exp_list(Env,Exps)]}
+  end.
+
+match(Value, [Clause|Rest]) ->
+  [ClausePat] = cerl:clause_pats(Clause),
+  case match_clause(Value,ClausePat) of
+    MatchEnv ->
+      ClauseBody = cerl:clause_body(Clause),
+      {ClausePat,ClauseBody};
+    fail -> 
+      match(Value,Rest)    
+  end.
+
+% match_clause({c_literal,_,})
+% match_clause({c_var,_,Var},)
