@@ -6,11 +6,20 @@ start(FunDefs) ->
 
 loop(FunDefs) ->
   receive
-    {Pid,{FunName,FunArity}} ->
-      FunBody = findBody(FunName,FunArity,FunDefs),
-      Pid ! FunBody,
-      loop(FunDefs)
+    {Pid,FunName} ->
+      FunDef = findDef(FunName,FunDefs),
+      Pid ! FunDef,
+      loop(FunDefs);
+    terminate -> ok
   end.
 
-findBody(FunName,FunArity,FunDefs) ->
-  hd[Body || {Name,Body} <- FunDefs, cerl:var_name(Name) == {FunName,FunArity}].
+findDef(FunName,FunDefs) ->
+  
+  FunDefList = [FunD || {FunN, FunD} <- FunDefs, FunN == FunName],%, cerl:var_name(FunDef)],
+  %io:fwrite("~p~n",[FunDefList])
+  hd(FunDefList)
+  % case length(FunDefList) of
+  %   1 -> hd(FunDefList);
+  %   _Other -> nothing
+  % end.
+.
