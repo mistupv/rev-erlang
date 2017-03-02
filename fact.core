@@ -1,0 +1,74 @@
+module 'fact' ['main'/1,
+	       'module_info'/0,
+	       'module_info'/1]
+    attributes []
+'main'/1 =
+    %% Line 5
+    fun (_cor0) ->
+	apply 'factorial'/1
+	    (_cor0)
+'factorial'/1 =
+    %% Line 6
+    fun (_cor0) ->
+	case _cor0 of
+	  %% Line 7
+	  <'z'> when 'true' ->
+	      {'s','z'}
+	  %% Line 8
+	  <{'s',Y}> when 'true' ->
+	      let <_cor1> =
+		  apply 'factorial'/1
+		      (Y)
+	      in  apply 'mult'/2
+		      (_cor0, _cor1)
+	  ( <_cor2> when 'true' ->
+		primop 'match_fail'
+		    ({'case_clause',_cor2})
+	    -| ['compiler_generated'] )
+	end
+'mult'/2 =
+    %% Line 10
+    fun (_cor1,_cor0) ->
+	case _cor1 of
+	  %% Line 11
+	  <'z'> when 'true' ->
+	      'z'
+	  %% Line 12
+	  <{'s',Z}> when 'true' ->
+	      let <_cor2> =
+		  apply 'mult'/2
+		      (Z, _cor0)
+	      in  apply 'sum'/2
+		      (_cor0, _cor2)
+	  ( <_cor3> when 'true' ->
+		primop 'match_fail'
+		    ({'case_clause',_cor3})
+	    -| ['compiler_generated'] )
+	end
+'sum'/2 =
+    %% Line 14
+    fun (_cor1,_cor0) ->
+	case _cor1 of
+	  %% Line 15
+	  <'z'> when 'true' ->
+	      _cor0
+	  %% Line 16
+	  <{'s',Z}> when 'true' ->
+	      let <W> =
+		  apply 'sum'/2
+		      (Z, _cor0)
+	      in  {'s',W}
+	  ( <_cor3> when 'true' ->
+		primop 'match_fail'
+		    ({'case_clause',_cor3})
+	    -| ['compiler_generated'] )
+	end
+'module_info'/0 =
+    fun () ->
+	call 'erlang':'get_module_info'
+	    ('fact')
+'module_info'/1 =
+    fun (_cor0) ->
+	call 'erlang':'get_module_info'
+	    ('fact', _cor0)
+end
