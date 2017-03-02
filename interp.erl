@@ -31,6 +31,12 @@ start(ModuleFile, {Fun,Args}) ->
     false -> ok
   end,
   register(fdserver,FunDefServer),
+  SchedServer = spawn(schedserver,start,[]),
+    case lists:member(schedserver,registered()) of
+    true -> unregister(schedserver);
+    false -> ok
+  end,
+  register(schedserver,SchedServer),
   Gamma = [],
   %InitF = {c_var,[],Fun},
   Procs = [{1,
@@ -38,7 +44,8 @@ start(ModuleFile, {Fun,Args}) ->
            []}],
   System = {Gamma,Procs},
   eval(System),
-  fdserver ! terminate.
+  fdserver ! terminate,
+  schedserver ! terminate.
   %ok.%.
 
   %fact:InitF(Args).
@@ -51,19 +58,37 @@ eval(System) ->
   io:fwrite("~p~n",[System]),
   NewSystem =
     receive
-      {wx,?ID_FORWARD_STEP,_,_,_} -> eval_step(System,forward);
-      {wx,?ID_BACKWARD_STEP,_,_,_} -> eval_step(System,backward)
+      {wx,?ID_FORWARD_STEP,_,_,_} ->
+        schedserver!{self(),System},
+        receive
+          gamma -> eval_sched(System,forward);
+          Pid -> eval_step(System,Pid,forward)
+        end;
+      {wx,?ID_BACKWARD_STEP,_,_,_} ->
+        % Backward scheduling == Forward scheduling?
+        schedserver!{self(),System},
+        receive
+          gamma -> eval_sched(System,backward);
+          Pid -> eval_step(System,Pid,backward)
+        end
     end,
   eval(NewSystem).
    
+eval_sched(System,forward) ->
+  System;
+eval_sched(System,backward) ->
+  System.
 
-eval_step({Gamma,Procs},forward) ->
- % TODO: Define a better eval strategy
-  {Pid,{Env,Exp},Mail} = hd(Procs),
+eval_step({Gamma,Procs},Pid,forward) ->
+  %io:fwrite("Chosen Pid: ~p~n",[Pid]),
+  [{Pid,{Env,Exp},Mail}] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
 
   case cerl:type(Exp) of
     literal ->
       {Gamma,[{Pid,{Env,Exp},Mail}]};
+    var ->
+      {NewEnv,NewExp} = eval_exp(Env,Exp),
+      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
     apply -> 
       ApplyOp = cerl:apply_op(Exp),
       ApplyArgs = cerl:apply_args(Exp),
@@ -97,7 +122,7 @@ eval_step({Gamma,Procs},forward) ->
           end
       end
   end;
-eval_step({Gamma,Procs},backward) ->
+eval_step({Gamma,Procs},_Pid,backward) ->
   {Gamma,Procs}.
 
 is_exp(Exp) -> 
