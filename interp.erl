@@ -62,7 +62,8 @@ eval_step({Gamma,Procs},forward) ->
   {Pid,{Env,Exp},Mail} = hd(Procs),
 
   case cerl:type(Exp) of
-    literal -> {Gamma,[{Pid,{Env,Exp},Mail}]};
+    literal ->
+      {Gamma,[{Pid,{Env,Exp},Mail}]};
     apply -> 
       ApplyOp = cerl:apply_op(Exp),
       ApplyArgs = cerl:apply_args(Exp),
@@ -73,7 +74,6 @@ eval_step({Gamma,Procs},forward) ->
           FunArgs = cerl:fun_vars(FunDef)
       end,
       NewEnv = lists:zip(FunArgs, ApplyArgs),
-      NewExp = FunBody,
       % TODO: Define a better eval strategy
       {Gamma,[{Pid,{NewEnv,FunBody},Mail}]};
     'case' ->
@@ -87,10 +87,14 @@ eval_step({Gamma,Procs},forward) ->
           {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
         false ->
           CaseClauses = cerl:case_clauses(Exp),
-          
-          {NewEnv,NewExp} = match(CaseArg,CaseClauses),
-          {Gamma,[{Pid,{Env++NewEnv,NewExp},Mail}]}
-
+          case cerl_clauses:reduce(CaseClauses,[CaseArg]) of
+            {true,{Clause,Bindings}} ->
+              % TODO: Improve Env++Bindings (i.e., no duplicates)
+              ClauseBody = cerl:clause_body(Clause),
+              {Gamma,[{Pid,{Env++Bindings,ClauseBody},Mail}]};
+            {false,_} ->
+              io:fwrite("Error: No matching clause~n") 
+          end
       end
   end;
 eval_step({Gamma,Procs},backward) ->
@@ -114,7 +118,7 @@ eval_exp(Env,Exp) ->
         true -> eval_exp(Env,cerl:cons_hd(Exp));
         false -> eval_exp(Env,cerl:cons_tl(Exp))
       end;
-    tuples -> eval_exp_list(Env,cerl:tuples_es(Exp));
+    tuple -> eval_exp_list(Env,cerl:tuples_es(Exp));
     values -> eval_exp_list(Env,cerl:values_es(Exp))
   end.
 
@@ -126,16 +130,3 @@ eval_exp_list(Env,[Exp|Exps]) ->
     false ->
       {Env,[Exp|eval_exp_list(Env,Exps)]}
   end.
-
-match(Value, [Clause|Rest]) ->
-  [ClausePat] = cerl:clause_pats(Clause),
-  case match_clause(Value,ClausePat) of
-    MatchEnv ->
-      ClauseBody = cerl:clause_body(Clause),
-      {ClausePat,ClauseBody};
-    fail -> 
-      match(Value,Rest)    
-  end.
-
-% match_clause({c_literal,_,})
-% match_clause({c_var,_,Var},)
