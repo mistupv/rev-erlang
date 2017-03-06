@@ -32,11 +32,17 @@ start(ModuleFile, {Fun,Args}) ->
   end,
   register(fdserver,FunDefServer),
   SchedServer = spawn(schedserver,start,[]),
-    case lists:member(schedserver,registered()) of
+  case lists:member(schedserver,registered()) of
     true -> unregister(schedserver);
     false -> ok
   end,
   register(schedserver,SchedServer),
+  FreshServer = spawn(freshserver,start,[]),
+  case lists:member(freshserver,registered()) of
+    true -> unregister(freshserver);
+    false -> ok
+  end,
+  register(freshserver,SchedServer),
   Gamma = [],
   %InitF = {c_var,[],Fun},
   Procs = [{1,
@@ -45,7 +51,8 @@ start(ModuleFile, {Fun,Args}) ->
   System = {Gamma,Procs},
   eval(System),
   fdserver ! terminate,
-  schedserver ! terminate.
+  schedserver ! terminate,
+  freshserver ! terminate.
 
 eval(System) ->
   io:fwrite("~p~n",[System]),
@@ -83,18 +90,33 @@ eval_step({Gamma,Procs},Pid,forward) ->
     var ->
       {NewEnv,NewExp} = eval_exp(Env,Exp),
       {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+    cons ->
+      {NewEnv,NewExp} = eval_exp(Env,Exp),
+      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+    tuple ->
+      {NewEnv,NewExp} = eval_exp(Env,Exp),
+      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
     apply -> 
-      ApplyOp = cerl:apply_op(Exp),
       ApplyArgs = cerl:apply_args(Exp),
-      fdserver ! {self(),ApplyOp},
-      receive
-        FunDef ->
-          FunBody = cerl:fun_body(FunDef),
-          FunArgs = cerl:fun_vars(FunDef)
-      end,
-      NewEnv = lists:zip(FunArgs, ApplyArgs),
-      % TODO: Define a better eval strategy
-      {Gamma,[{Pid,{NewEnv,FunBody},Mail}]};
+      ApplyOp = cerl:apply_op(Exp),
+      case is_exp(ApplyArgs) of
+        true ->
+          {NewEnv,NewArgs} = eval_exp(Env,ApplyArgs),
+          NewExp = cerl:update_c_apply(Exp,
+                                       ApplyOp,
+                                       NewArgs),
+          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+        false ->
+          fdserver ! {self(),ApplyOp},
+          receive
+            FunDef ->
+              FunBody = cerl:fun_body(FunDef),
+              FunArgs = cerl:fun_vars(FunDef)
+          end,
+          NewEnv = lists:zip(FunArgs, ApplyArgs),
+          % TODO: Define a better eval strategy
+          {Gamma,[{Pid,{NewEnv,FunBody},Mail}]}
+      end;
     'case' ->
       CaseArg = cerl:case_arg(Exp),
       case is_exp(CaseArg) of
@@ -131,6 +153,22 @@ eval_step({Gamma,Procs},Pid,forward) ->
           NewEnv = lists:zip(LetVars,LetArg),
           NewExp = cerl:let_body(Exp),
           {Gamma,[{Pid,{Env++NewEnv,NewExp},Mail}]}
+      end;
+    call ->
+      CallArgs = cerl:call_args(Exp),
+      CallModule = cerl:call_op(Exp),
+      CallName = cerl:call_name(Exp),
+      case is_exp(CallArgs) of
+        true ->
+          {NewEnv,NewArgs} = eval_exp(Env,CallArgs),
+          NewExp = cerl:update_c_call(Exp,
+                                       CallModule,
+                                       CallName,
+                                       NewArgs),
+          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+        false ->
+          % Check concurrent action
+          {Gamma,[{Pid,{Env,Exp},Mail}]}
       end
   end;
 eval_step({Gamma,Procs},_Pid,backward) ->
@@ -147,16 +185,20 @@ is_exp(Exp) ->
     
 eval_exp(Env,Exp) -> 
   case cerl:type(Exp) of
-    var -> {Env,hd([Val || {Var,Val} <- Env, Var == Exp])};
+    var ->
+      [Value] = [Val || {Var,Val} <- Env, Var == Exp],
+      {Env,Value};
     cons -> 
       case is_exp(cerl:cons_hd(Exp)) of
         true -> eval_exp(Env,cerl:cons_hd(Exp));
         false -> eval_exp(Env,cerl:cons_tl(Exp))
       end;
-    tuple -> eval_exp_list(Env,cerl:tuples_es(Exp));
-    values -> eval_exp_list(Env,cerl:values_es(Exp))
+    tuple -> eval_exp_list(Env,cerl:tuples_es(Exp))
+    %values -> eval_exp_list(Env,cerl:values_es(Exp))
   end.
 
+eval_exp_list(Env,[]) ->
+  {Env, []};
 eval_exp_list(Env,[Exp|Exps]) ->
   case is_exp(Exp) of
     true ->
