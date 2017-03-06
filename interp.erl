@@ -46,15 +46,8 @@ start(ModuleFile, {Fun,Args}) ->
   eval(System),
   fdserver ! terminate,
   schedserver ! terminate.
-  %ok.%.
-
-  %fact:InitF(Args).
-  % debug
-  %io:fwrite("~p~n",[CleanCoreForms]).%,
-%FinalSystem = eval(System).
 
 eval(System) ->
- % debug
   io:fwrite("~p~n",[System]),
   NewSystem =
     receive
@@ -79,6 +72,7 @@ eval_sched(System,forward) ->
 eval_sched(System,backward) ->
   System.
 
+% TODO: split eval_step in 2 modules (1 fwd, 1 bwd)?
 eval_step({Gamma,Procs},Pid,forward) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   [{Pid,{Env,Exp},Mail}] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
@@ -120,6 +114,23 @@ eval_step({Gamma,Procs},Pid,forward) ->
             {false,_} ->
               io:fwrite("Error: No matching clause~n") 
           end
+      end;
+    'let' ->
+      LetArg = cerl:let_arg(Exp),
+      case is_exp(LetArg) of
+        true ->
+          {NewEnv,NewLetArg} = eval_exp(Env,LetArg),
+          NewExp = cerl:update_c_let(Exp,
+                                     cerl:let_vars(Exp),
+                                     NewLetArg,
+                                     cerl:let_body(Exp)),
+          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+        false ->
+          LetVars = cerl:let_vars(Exp),
+          LetArg = cerl:let_arg(Exp),
+          NewEnv = lists:zip(LetVars,LetArg),
+          NewExp = cerl:let_body(Exp),
+          {Gamma,[{Pid,{Env++NewEnv,NewExp},Mail}]}
       end
   end;
 eval_step({Gamma,Procs},_Pid,backward) ->
@@ -128,7 +139,6 @@ eval_step({Gamma,Procs},_Pid,backward) ->
 is_exp(Exp) -> 
   case cerl:type(Exp) of
     literal -> false;
-    % numbers
     var -> true;
     cons -> is_exp(cerl:cons_hd(Exp)) and is_exp(cerl:cons_tl(Exp));
     tuple -> lists:all(is_exp, cerl:tuples_es(Exp));
