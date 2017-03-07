@@ -42,7 +42,7 @@ start(ModuleFile, {Fun,Args}) ->
     true -> unregister(freshserver);
     false -> ok
   end,
-  register(freshserver,SchedServer),
+  register(freshserver,FreshServer),
   Gamma = [],
   %InitF = {c_var,[],Fun},
   Procs = [{1,
@@ -83,10 +83,13 @@ eval_sched(System,backward) ->
 eval_step({Gamma,Procs},Pid,forward) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   [{Pid,{Env,Exp},Mail}] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
+  RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= Pid],
 
   case cerl:type(Exp) of
     literal ->
-      {Gamma,[{Pid,{Env,Exp},Mail}]};
+      {Gamma,[{Pid,{Env,Exp},Mail}] ++ RestProcs};
+    nil -> 
+      {Gamma,[{Pid,{Env,Exp},Mail}] ++ RestProcs};
     var ->
       {NewEnv,NewExp} = eval_exp(Env,Exp),
       {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
@@ -158,6 +161,7 @@ eval_step({Gamma,Procs},Pid,forward) ->
       CallArgs = cerl:call_args(Exp),
       CallModule = cerl:call_op(Exp),
       CallName = cerl:call_name(Exp),
+      % should we also eval module or name?
       case is_exp(CallArgs) of
         true ->
           {NewEnv,NewArgs} = eval_exp(Env,CallArgs),
@@ -167,8 +171,21 @@ eval_step({Gamma,Procs},Pid,forward) ->
                                        NewArgs),
           {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
         false ->
-          % Check concurrent action
-          {Gamma,[{Pid,{Env,Exp},Mail}]}
+          
+          % case CallModule of
+          %   % improve error
+          %   'erlang' -> 
+          %     case CallName of
+          %       'self' -> NewExp = Pid, 
+          %         {Gamma,[{Pid,{Env,NewExp},Mail}] ++ RestProcs};
+          %       %'!' -> eval_conc(CallArgs,Gamma,send);
+          %       %'spawn' -> eval_conc(Exp,)
+          %       OtherName ->   
+          %         erlang:error(undef_name)
+          %     end;
+          %   OtherModule ->
+          %     erlang:error(undef_call)
+          % end    
       end
   end;
 eval_step({Gamma,Procs},_Pid,backward) ->
@@ -177,6 +194,7 @@ eval_step({Gamma,Procs},_Pid,backward) ->
 is_exp(Exp) -> 
   case cerl:type(Exp) of
     literal -> false;
+    nil -> false;
     var -> true;
     cons -> is_exp(cerl:cons_hd(Exp)) and is_exp(cerl:cons_tl(Exp));
     tuple -> lists:all(is_exp, cerl:tuples_es(Exp));
