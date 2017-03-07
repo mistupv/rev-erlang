@@ -82,33 +82,49 @@ eval_sched(System,backward) ->
 % TODO: split eval_step in 2 modules (1 fwd, 1 bwd)?
 eval_step({Gamma,Procs},Pid,forward) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
-  [{Pid,{Env,Exp},Mail}] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
+  [Proc] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
+  {Pid,{Env,Exp},Mail} = Proc,
   RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= Pid],
+  {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
+  NewSystem = 
+    case Label of
+      tau -> 
+        {Gamma,Proc ++ RestProcs};
+      _Other ->
+      %eval_conc() 
+        {Gamma,Proc ++ RestProcs}
+    end,
+  NewSystem;
 
+eval_step({Gamma,Procs},_Pid,backward) ->
+  {Gamma,Procs}.
+
+eval_seq(Env,Exp) ->
   case cerl:type(Exp) of
-    literal ->
-      {Gamma,[{Pid,{Env,Exp},Mail}] ++ RestProcs};
-    nil -> 
-      {Gamma,[{Pid,{Env,Exp},Mail}] ++ RestProcs};
+    % literal ->
+    %   {Env,Exp,tau};
+    % nil -> 
+    % {Env,Exp,tau};
     var ->
-      {NewEnv,NewExp} = eval_exp(Env,Exp),
-      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+      [Value] = [Val || {Var,Val} <- Env, Var == Exp],
+      {Env,Value,tau};
     cons ->
-      {NewEnv,NewExp} = eval_exp(Env,Exp),
-      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+      case is_exp(cerl:cons_hd(Exp)) of
+        true -> eval_seq(Env,cerl:cons_hd(Exp));
+        false -> eval_seq(Env,cerl:cons_tl(Exp))
+      end;
     tuple ->
-      {NewEnv,NewExp} = eval_exp(Env,Exp),
-      {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+      eval_list(Env,cerl:tuples_es(Exp));
     apply -> 
       ApplyArgs = cerl:apply_args(Exp),
       ApplyOp = cerl:apply_op(Exp),
       case is_exp(ApplyArgs) of
         true ->
-          {NewEnv,NewArgs} = eval_exp(Env,ApplyArgs),
+          {NewEnv,NewArgs,Label} = eval_seq(Env,ApplyArgs),
           NewExp = cerl:update_c_apply(Exp,
                                        ApplyOp,
                                        NewArgs),
-          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+          {NewEnv,NewExp,Label};
         false ->
           fdserver ! {self(),ApplyOp},
           receive
@@ -117,25 +133,27 @@ eval_step({Gamma,Procs},Pid,forward) ->
               FunArgs = cerl:fun_vars(FunDef)
           end,
           NewEnv = lists:zip(FunArgs, ApplyArgs),
+          {NewEnv,FunBody,tau}
           % TODO: Define a better eval strategy
-          {Gamma,[{Pid,{NewEnv,FunBody},Mail}]}
+          %{Gamma,[{Pid,{NewEnv,FunBody},Mail}]}
       end;
     'case' ->
       CaseArg = cerl:case_arg(Exp),
       case is_exp(CaseArg) of
         true ->
-          {NewEnv,NewCaseArg} = eval_exp(Env,CaseArg),
+          {NewEnv,NewCaseArg,Label} = eval_seq(Env,CaseArg),
           NewExp = cerl:update_c_case(Exp,
                                       NewCaseArg,
                                       cerl:case_clauses(Exp)),
-          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+          {NewEnv,NewExp,Label};
         false ->
           CaseClauses = cerl:case_clauses(Exp),
           case cerl_clauses:reduce(CaseClauses,[CaseArg]) of
             {true,{Clause,Bindings}} ->
               % TODO: Improve Env++Bindings (i.e., no duplicates)
               ClauseBody = cerl:clause_body(Clause),
-              {Gamma,[{Pid,{Env++Bindings,ClauseBody},Mail}]};
+              NewEnv = Env++Bindings,
+              {NewEnv,ClauseBody,tau};
             {false,_} ->
               io:fwrite("Error: No matching clause~n") 
           end
@@ -144,18 +162,18 @@ eval_step({Gamma,Procs},Pid,forward) ->
       LetArg = cerl:let_arg(Exp),
       case is_exp(LetArg) of
         true ->
-          {NewEnv,NewLetArg} = eval_exp(Env,LetArg),
+          {NewEnv,NewLetArg,Label} = eval_seq(Env,LetArg),
           NewExp = cerl:update_c_let(Exp,
                                      cerl:let_vars(Exp),
                                      NewLetArg,
                                      cerl:let_body(Exp)),
-          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+          {NewEnv,NewExp,Label};
         false ->
           LetVars = cerl:let_vars(Exp),
           LetArg = cerl:let_arg(Exp),
-          NewEnv = lists:zip(LetVars,LetArg),
+          NewEnv = lists:zip(LetVars,LetArg) ++ Env,
           NewExp = cerl:let_body(Exp),
-          {Gamma,[{Pid,{Env++NewEnv,NewExp},Mail}]}
+          {NewEnv,NewExp,tau}
       end;
     call ->
       CallArgs = cerl:call_args(Exp),
@@ -164,14 +182,14 @@ eval_step({Gamma,Procs},Pid,forward) ->
       % should we also eval module or name?
       case is_exp(CallArgs) of
         true ->
-          {NewEnv,NewArgs} = eval_exp(Env,CallArgs),
+          {NewEnv,NewCallArgs,Label} = eval_seq(Env,CallArgs),
           NewExp = cerl:update_c_call(Exp,
                                        CallModule,
                                        CallName,
-                                       NewArgs),
-          {Gamma,[{Pid,{NewEnv,NewExp},Mail}]};
+                                       NewCallArgs),
+          {NewEnv,NewExp,Label};
         false ->
-          
+          ok
           % case CallModule of
           %   % improve error
           %   'erlang' -> 
@@ -187,41 +205,25 @@ eval_step({Gamma,Procs},Pid,forward) ->
           %     erlang:error(undef_call)
           % end    
       end
-  end;
-eval_step({Gamma,Procs},_Pid,backward) ->
-  {Gamma,Procs}.
+  end.
 
 is_exp(Exp) -> 
   case cerl:type(Exp) of
     literal -> false;
     nil -> false;
-    var -> true;
     cons -> is_exp(cerl:cons_hd(Exp)) and is_exp(cerl:cons_tl(Exp));
     tuple -> lists:all(is_exp, cerl:tuples_es(Exp));
-    values -> lists:all(is_exp, cerl:values_es(Exp))
-  end.
-    
-eval_exp(Env,Exp) -> 
-  case cerl:type(Exp) of
-    var ->
-      [Value] = [Val || {Var,Val} <- Env, Var == Exp],
-      {Env,Value};
-    cons -> 
-      case is_exp(cerl:cons_hd(Exp)) of
-        true -> eval_exp(Env,cerl:cons_hd(Exp));
-        false -> eval_exp(Env,cerl:cons_tl(Exp))
-      end;
-    tuple -> eval_exp_list(Env,cerl:tuples_es(Exp))
-    %values -> eval_exp_list(Env,cerl:values_es(Exp))
+    %values -> lists:all(is_exp, cerl:values_es(Exp));
+    _Other -> true
   end.
 
-eval_exp_list(Env,[]) ->
-  {Env, []};
-eval_exp_list(Env,[Exp|Exps]) ->
+eval_list(Env,[]) ->
+  {Env,[]};
+eval_list(Env,[Exp|Exps]) ->
   case is_exp(Exp) of
     true ->
-      {NewEnv,NewExp} = eval_exp(Env,Exp),
-      {NewEnv,[NewExp|Exps]};
+      {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
+      {NewEnv,[NewExp|Exps],Label};
     false ->
-      {Env,[Exp|eval_exp_list(Env,Exps)]}
+      {Env,[Exp|eval_list(Env,Exps)]}
   end.
