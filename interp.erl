@@ -87,6 +87,7 @@ eval_step({Gamma,Procs},Pid,forward) ->
   RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= Pid],
   {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
   NewSystem = 
+    % Labels can contain more or less information than in the papers
     case Label of
       tau -> 
         {Gamma,[{Pid,{NewEnv,NewExp},Mail}] ++ RestProcs};
@@ -98,7 +99,10 @@ eval_step({Gamma,Procs},Pid,forward) ->
         {NewGamma,[{Pid,{NewEnv,NewExp},Mail}] ++ RestProcs};
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,NewProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
-        {Gamma,[{Pid,{NewEnv++NewBind,NewExp},Mail}] ++ [NewProc] ++ RestProcs}
+        {Gamma,[{Pid,{NewEnv++NewBind,NewExp},Mail}] ++ [NewProc] ++ RestProcs};
+      {rec,Var,ReceiveClauses} ->
+        NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,NewEnv,NewExp,Mail),
+        {Gamma,[NewProc] ++ RestProcs}
     end,
   NewSystem;
 
@@ -114,6 +118,21 @@ eval_conc(spawn,Var,CallName,CallArgs,NewEnv) ->
               {NewEnv,{c_apply,[],{c_var,[],CallName},CallArgs}},
               []},
   {{Var,NewPid},NewProc}.
+eval_conc(rec,Var,ReceiveClauses,Pid,Env,Exp,Mail) ->
+  case length(Mail) of
+    0 ->
+      io:fwrite("Error: No messages in mailbox~n"),
+        {Pid,{Env,Exp},Mail};
+    _Other ->
+      case matchrec(ReceiveClauses,Mail) of
+        no_match ->
+          io:fwrite("Error: No matching messages~n"),
+          {Pid,{Env,Exp},Mail};
+        {Bindings,NewExp,NewMail} ->
+          NewEnv = Env ++ [{Var,NewExp}] ++ Bindings,
+          {Pid,{NewEnv,Exp},NewMail}
+      end
+  end.
 
 eval_seq(Env,Exp) ->
   case cerl:type(Exp) of
@@ -246,7 +265,11 @@ eval_seq(Env,Exp) ->
           % not sure about this
           NewExp = cerl:seq_body(Exp),
           {Env,NewExp,tau}
-      end
+      end;
+    'receive' ->
+        % TODO: replace for fresh vars
+        Var = {c_var,[],y},
+        {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
   end.
 
 is_exp([]) -> false;
@@ -273,4 +296,19 @@ eval_list(Env,[Exp|Exps]) ->
       % Not sure about this
       {NewEnv,NewExp,Label} = eval_list(Env,Exps),
       {NewEnv,[Exp|NewExp],Label}
+  end.
+
+matchrec(Clauses,Mail) ->
+  matchrec(Clauses,Mail,[]).
+
+matchrec(_,[],_) ->
+  no_match;
+matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
+  case cerl_clauses:reduce(Clauses,[CurMsg]) of
+    {true,{Clause,Bindings}} ->
+      ClauseBody = cerl:clause_body(Clause),
+      NewMsgs =  AccMsgs ++ RestMsgs,
+      {Bindings,ClauseBody,NewMsgs};
+    {false,_} ->
+      matchrec(Clauses,RestMsgs,[CurMsg] ++ AccMsgs)
   end.
