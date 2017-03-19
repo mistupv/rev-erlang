@@ -74,8 +74,26 @@ eval(System) ->
     end,
   eval(NewSystem).
    
-eval_sched(System,forward) ->
-  System;
+eval_sched({Gamma,Procs},forward) ->
+  GammaLen = length(Gamma),
+  case GammaLen of
+    0 ->
+      {Gamma,Procs};
+    _Other ->
+      RandIdx = rand:uniform(GammaLen),
+      RandMsg = lists:nth(RandIdx,Gamma),
+      % TODO: delete removes 1st message equal to the message,
+      % not the nth message. It can be improved...
+      NewGamma = lists:delete(RandMsg,Gamma),
+      {_SrcPid,DestPid,MsgValue} = RandMsg,
+      % TODO: Fix case when DestPid process does not exist
+      [Proc] = [{P,S,M} || {P,S,M} <- Procs, P == DestPid],
+      RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= DestPid],
+      {Pid,{Env,Exp},Mail} = Proc,
+      NewMail = Mail ++ [MsgValue],
+      NewProc = {Pid,{Env,Exp},NewMail},
+      {NewGamma,[NewProc] ++ RestProcs}
+  end;
 eval_sched(System,backward) ->
   System.
 
@@ -110,7 +128,7 @@ eval_step({Gamma,Procs},_Pid,backward) ->
   {Gamma,Procs}.
 
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
-eval_conc(send,FullMsg,Gamma) -> Gamma ++ FullMsg.
+eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
 eval_conc(spawn,Var,CallName,CallArgs,NewEnv) -> 
   {self(),new_pid} ! freshserver,
   NewPid = {c_literal,[],receive FreshPid -> FreshPid end}, 
