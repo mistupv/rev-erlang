@@ -13,6 +13,7 @@ loop() ->
     terminate -> ok
   end.
 
+% TODO: Make unique case and call randPid without unevaluable processes
 randPid({Gamma,Procs}) ->
   case Gamma of
     [] ->

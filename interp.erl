@@ -37,12 +37,18 @@ start(ModuleFile, {Fun,Args}) ->
     false -> ok
   end,
   register(schedserver,SchedServer),
-  FreshServer = spawn(freshserver,start,[]),
-  case lists:member(freshserver,registered()) of
-    true -> unregister(freshserver);
+  FreshPidServer = spawn(freshpidserver,start,[]),
+  case lists:member(freshpidserver,registered()) of
+    true -> unregister(freshpidserver);
     false -> ok
   end,
-  register(freshserver,FreshServer),
+  register(freshpidserver,FreshPidServer),
+  FreshVarServer = spawn(freshvarserver,start,[]),
+  case lists:member(freshvarserver,registered()) of
+    true -> unregister(freshvarserver);
+    false -> ok
+  end,
+  register(freshvarserver,FreshVarServer),
   Gamma = [],
   %InitF = {c_var,[],Fun},
   Procs = [{{c_literal,[],1},
@@ -52,7 +58,8 @@ start(ModuleFile, {Fun,Args}) ->
   eval(System),
   fdserver ! terminate,
   schedserver ! terminate,
-  freshserver ! terminate.
+  freshpidserver ! terminate,
+  freshvarserver ! terminate.
 
 eval(System) ->
   io:fwrite("~p~n",[System]),

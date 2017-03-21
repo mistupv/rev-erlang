@@ -4,7 +4,7 @@
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
 eval_conc(spawn,Var,CallName,CallArgs,NewEnv) -> 
-  {self(),new_pid} ! freshserver,
+  {self(),new_pid} ! freshpidserver,
   NewPid = {c_literal,[],receive FreshPid -> FreshPid end}, 
   NewProc = {NewPid,
               {NewEnv,{c_apply,[],{c_var,[],CallName},CallArgs}},

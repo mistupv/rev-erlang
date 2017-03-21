@@ -1,4 +1,4 @@
--module(freshserver).
+-module(freshpidserver).
 -export([start/0]).
 
 start() ->
