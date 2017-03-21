@@ -107,7 +107,8 @@ eval_seq(Env,Exp) ->
       case {CallModule, CallName} of
         {'erlang','spawn'} -> 
           % TODO: Fresh names!
-          Var = {c_var,[],y},
+          freshvarserver ! {self(),new_var},
+          Var = receive NewVar -> NewVar end,
           {Env,Var,{spawn,{Var,CallName,CallArgs}}};
         _Other ->
         % should we also eval module or name?
@@ -125,7 +126,8 @@ eval_seq(Env,Exp) ->
                 {c_literal,_,'erlang'} -> 
                   case CallName of
                     {c_literal,_,'self'} ->
-                      Var = {c_var,[],y},
+                      freshvarserver ! {self(),new_var},
+                      Var = receive NewVar -> NewVar end,
                       {Env,Var,{self,Var}};
                     {c_literal,_,'!'} ->
                       DestPid = lists:nth(1,CallArgs),
@@ -156,7 +158,8 @@ eval_seq(Env,Exp) ->
       end;
     'receive' ->
         % TODO: replace for fresh vars
-        Var = {c_var,[],y},
+        freshvarserver ! {self(),new_var},
+        Var = receive NewVar -> NewVar end,
         {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
   end.
 
