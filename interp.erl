@@ -61,15 +61,15 @@ eval(System) ->
       {wx,?ID_FORWARD_STEP,_,_,_} ->
         schedserver!{self(),System},
         receive
-          gamma -> eval_sched(System,forward);
-          Pid -> eval_step(System,Pid,forward)
+          gamma -> fwd_sem:eval_sched(System);
+          Pid -> fwd_sem:eval_step(System,Pid)
         end;
       {wx,?ID_BACKWARD_STEP,_,_,_} ->
         % Backward scheduling == Forward scheduling?
         schedserver!{self(),System},
         receive
-          gamma -> eval_sched(System,backward);
-          Pid -> eval_step(System,Pid,backward)
+          gamma -> bwd_sem:eval_sched(System);
+          Pid -> bwd_sem:eval_step(System,Pid)
         end
     end,
   eval(NewSystem).

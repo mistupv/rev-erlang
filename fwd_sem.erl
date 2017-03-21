@@ -160,7 +160,6 @@ eval_seq(Env,Exp) ->
         {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
   end.
 
-% TODO: split eval_step in 2 modules (1 fwd, 1 bwd)?
 eval_step({Gamma,Procs},Pid) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   [Proc] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
@@ -208,7 +207,7 @@ eval_sched({Gamma,Procs}) ->
       {NewGamma,[NewProc] ++ RestProcs}
   end.
 
-  
+
 is_exp([]) -> false;
 is_exp(Exp) when is_list(Exp) ->
   lists:any(fun is_exp/1, Exp);
