@@ -1,5 +1,5 @@
 -module(fwd_sem).
--export([eval_step/2,eval_sched/1]).
+-export([eval_step/2,eval_sched/1,can_eval/2]).
 
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
@@ -106,7 +106,6 @@ eval_seq(Env,Exp) ->
       CallName = cerl:call_name(Exp),
       case {CallModule, CallName} of
         {'erlang','spawn'} -> 
-          % TODO: Fresh names!
           freshvarserver ! {self(),new_var},
           Var = receive NewVar -> NewVar end,
           {Env,Var,{spawn,{Var,CallName,CallArgs}}};
@@ -157,7 +156,6 @@ eval_seq(Env,Exp) ->
           {Env,NewExp,tau}
       end;
     'receive' ->
-        % TODO: replace for fresh vars
         freshvarserver ! {self(),new_var},
         Var = receive NewVar -> NewVar end,
         {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
@@ -251,4 +249,24 @@ matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
     {false,_} ->
       matchrec(Clauses,RestMsgs,[CurMsg] ++ AccMsgs)
   end.
+
+can_eval({_Gamma,Procs},Pid) ->
+  {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
+  {Pid,{_Env,Exp},Mail} = Proc,
+  case is_exp(Exp) of
+    true ->
+      case cerl:type(Exp) of
+        'receive' ->
+          ReceiveClauses = cerl:receive_clauses(Exp),
+          case matchrec(ReceiveClauses, Mail) of
+            {true,_} -> true;
+            {false,_} -> false
+          end;
+          _Other -> true
+      end;
+    false -> false
+  end.
+
+
+
 

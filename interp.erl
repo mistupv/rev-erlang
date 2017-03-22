@@ -69,7 +69,13 @@ eval(System) ->
         schedserver!{self(),System},
         receive
           gamma -> fwd_sem:eval_sched(System);
-          Pid -> fwd_sem:eval_step(System,Pid)
+          Pid ->
+            case fwd_sem:can_eval(System,Pid) of
+              true -> fwd_sem:eval_step(System,Pid);
+              false ->
+                io:fwrite("System is reduced!~n"),
+                System
+            end
         end;
       {wx,?ID_BACKWARD_STEP,_,_,_} ->
         % Backward scheduling == Forward scheduling?
