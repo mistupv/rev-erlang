@@ -253,14 +253,19 @@ matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
   end.
 can_eval({[],_Procs},?ID_GAMMA) ->
   false;
-can_eval({_Gamma,_Procs},?ID_GAMMA) ->
-  true;
+can_eval({[{_SrcPid,DestPid,_MsgValue}|RestMsgs],Procs},?ID_GAMMA) ->
+  DestProcs = [{P,S,M} || {P,S,M} <- Procs, P == DestPid],
+  case DestProcs of
+    [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
+    _Other -> true
+  end;
 can_eval({_Gamma,Procs},Pid) ->
   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
   {Pid,{_Env,Exp},Mail} = Proc,
   case is_exp(Exp) of
     true ->
       case cerl:type(Exp) of
+        'receive' when length(Mail) == 0 -> false;
         'receive' ->
           ReceiveClauses = cerl:receive_clauses(Exp),
           case matchrec(ReceiveClauses, Mail) of
