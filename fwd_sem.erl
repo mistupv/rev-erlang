@@ -1,6 +1,8 @@
 -module(fwd_sem).
 -export([eval_step/2,eval_sched/1,can_eval/2]).
 
+-define(ID_GAMMA,0).
+
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
 eval_conc(spawn,Var,CallName,CallArgs,NewEnv) -> 
@@ -249,7 +251,10 @@ matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
     {false,_} ->
       matchrec(Clauses,RestMsgs,[CurMsg] ++ AccMsgs)
   end.
-
+can_eval({[],_Procs},?ID_GAMMA) ->
+  false;
+can_eval({_Gamma,_Procs},?ID_GAMMA) ->
+  true;
 can_eval({_Gamma,Procs},Pid) ->
   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
   {Pid,{_Env,Exp},Mail} = Proc,

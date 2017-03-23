@@ -5,6 +5,8 @@
 
 -define(ID_FORWARD_STEP,  40).
 -define(ID_BACKWARD_STEP, 41).
+
+-define(ID_GAMMA,0).
                       
 start(ModuleFile, {Fun,Args}) ->
   {ok,_,CoreForms} = compile:file(ModuleFile,[to_core,binary]),
@@ -55,6 +57,7 @@ start(ModuleFile, {Fun,Args}) ->
            {[],{c_apply,[],{c_var,[],Fun},Args}},
            []}],
   System = {Gamma,Procs},
+  io:fwrite("~p~n",[System]),
   eval(System),
   fdserver ! terminate,
   schedserver ! terminate,
@@ -62,27 +65,28 @@ start(ModuleFile, {Fun,Args}) ->
   freshvarserver ! terminate.
 
 eval(System) ->
-  io:fwrite("~p~n",[System]),
-  NewSystem =
+  
+  Semantics =
     receive
       {wx,?ID_FORWARD_STEP,_,_,_} ->
-        schedserver!{self(),System},
-        receive
-          gamma -> fwd_sem:eval_sched(System);
-          Pid ->
-            case fwd_sem:can_eval(System,Pid) of
-              true -> fwd_sem:eval_step(System,Pid);
-              false ->
-                io:fwrite("System is reduced!~n"),
-                System
-            end
-        end;
+        fwd_sem;
       {wx,?ID_BACKWARD_STEP,_,_,_} ->
-        % Backward scheduling == Forward scheduling?
-        schedserver!{self(),System},
-        receive
-          gamma -> bwd_sem:eval_sched(System);
-          Pid -> bwd_sem:eval_step(System,Pid)
-        end
+        bwd_sem
     end,
+  schedserver!{self(),Semantics,System},
+  {NewSystem,Evaluated} =
+    receive
+      null_pid ->
+        {System,false};
+      ?ID_GAMMA ->
+        {Semantics:eval_sched(System),true};
+      Pid ->
+        {Semantics:eval_step(System,Pid),true}
+    end,
+  case Evaluated of
+    false ->
+      io:fwrite("System is reduced!~n");
+    true ->
+      io:fwrite("~p~n",[NewSystem])
+  end,
   eval(NewSystem).
