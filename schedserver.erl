@@ -1,29 +1,30 @@
 -module(schedserver).
 -export([start/0]).
 
+-define(ID_GAMMA,0).
+
 start() ->
   loop().
 
 loop() ->
   receive
-    {Pid,System} ->
-      RandPid = randPid(System),
-      Pid ! RandPid,
+    {SenderPid,Semantics,{Gamma,Procs}} ->
+      Pids = [?ID_GAMMA] ++ [Pid || {Pid,_,_} <- Procs],
+      RandPid = randPid(Semantics,Pids,{Gamma,Procs}),
+      SenderPid ! RandPid,
       loop();
     terminate -> ok
   end.
 
-% TODO: Make unique case and call randPid without unevaluable processes
-randPid({Gamma,Procs}) ->
-  case Gamma of
-    [] ->
-      Pids = [Pid || {Pid,_,_} <- Procs],
-      PidsLen = length(Pids),
-      RandPid = random:uniform(PidsLen);
-    _Other ->
-      Pids = [gamma] ++ [Pid || {Pid,_,_} <- Procs],
-      GammaPidsLen = length(Pids),
-      RandPid = random:uniform(GammaPidsLen)
-  end,
-  lists:nth(RandPid,Pids).
-  
+randPid(_Semantics,[],_System) ->
+  null_pid;
+randPid(Semantics,Pids,System) ->
+  PidsLen = length(Pids),
+  RandElem = random:uniform(PidsLen),
+  RandPid = lists:nth(RandElem,Pids),
+  case Semantics:can_eval(System,RandPid) of
+    false ->
+      RestPids = lists:delete(RandPid,Pids),
+      randPid(Semantics,RestPids,System);
+    true -> RandPid
+  end.
