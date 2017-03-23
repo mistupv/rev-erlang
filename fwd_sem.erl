@@ -6,10 +6,10 @@
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
 eval_conc(spawn,Var,CallName,CallArgs,NewEnv) -> 
-  {self(),new_pid} ! freshpidserver,
+  freshpidserver ! {self(),new_pid},
   NewPid = {c_literal,[],receive FreshPid -> FreshPid end}, 
   NewProc = {NewPid,
-              {NewEnv,{c_apply,[],{c_var,[],CallName},CallArgs}},
+              {NewEnv,{c_apply,[],CallName,CallArgs}},
               []},
   {{Var,NewPid},NewProc}.
 eval_conc(rec,Var,ReceiveClauses,Pid,Env,Exp,Mail) ->
@@ -107,10 +107,15 @@ eval_seq(Env,Exp) ->
       CallModule = cerl:call_module(Exp),
       CallName = cerl:call_name(Exp),
       case {CallModule, CallName} of
-        {'erlang','spawn'} -> 
+        {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} -> 
           freshvarserver ! {self(),new_var},
           Var = receive NewVar -> NewVar end,
-          {Env,Var,{spawn,{Var,CallName,CallArgs}}};
+          FunName = lists:nth(2,CallArgs),
+          FunCoreArgs = lists:nth(3,CallArgs),
+          % here, Core just transforms Args to a literal
+          %({c_literal,[],[e_1,e_2]} without transforming e_1)
+          {c_literal,_,FunArgs} = FunCoreArgs,
+          {Env,Var,{spawn,{Var,FunName,FunArgs}}};
         _Other ->
         % should we also eval module or name?
           case is_exp(CallArgs) of
@@ -269,8 +274,8 @@ can_eval({_Gamma,Procs},Pid) ->
         'receive' ->
           ReceiveClauses = cerl:receive_clauses(Exp),
           case matchrec(ReceiveClauses, Mail) of
-            {true,_} -> true;
-            {false,_} -> false
+            no_match -> false;
+            _Other -> true
           end;
           _Other -> true
       end;

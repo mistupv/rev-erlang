@@ -65,7 +65,6 @@ start(ModuleFile, {Fun,Args}) ->
   freshvarserver ! terminate.
 
 eval(System) ->
-  
   Semantics =
     receive
       {wx,?ID_FORWARD_STEP,_,_,_} ->
