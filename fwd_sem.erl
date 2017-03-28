@@ -170,9 +170,8 @@ eval_seq(Env,Exp) ->
 
 eval_step({Gamma,Procs},Pid) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
-  [Proc] = [{P,S,M} || {P,S,M} <- Procs, P == Pid],
+  {Proc,RestProcs} = utils:select_proc(Procs,Pid),
   {Pid,{Env,Exp},Mail} = Proc,
-  RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= Pid],
   {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
   NewSystem = 
     % Labels can contain more or less information than in the papers
@@ -207,8 +206,7 @@ eval_sched({Gamma,Procs}) ->
       NewGamma = lists:delete(RandMsg,Gamma),
       {_SrcPid,DestPid,MsgValue} = RandMsg,
       % TODO: Fix case when DestPid process does not exist
-      [Proc] = [{P,S,M} || {P,S,M} <- Procs, P == DestPid],
-      RestProcs = [{P,S,M} || {P,S,M} <- Procs, P /= DestPid],
+      {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
       {Pid,{Env,Exp},Mail} = Proc,
       NewMail = Mail ++ [MsgValue],
       NewProc = {Pid,{Env,Exp},NewMail},
