@@ -206,7 +206,7 @@ eval_sched({Gamma,Procs}) ->
       NewGamma = lists:delete(RandMsg,Gamma),
       {_SrcPid,DestPid,MsgValue} = RandMsg,
       % TODO: Fix case when DestPid process does not exist
-      {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
+      {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
       {Pid,{Env,Exp},Mail} = Proc,
       NewMail = Mail ++ [MsgValue],
       NewProc = {Pid,{Env,Exp},NewMail},
