@@ -9,22 +9,24 @@ eval_conc(spawn,Var,CallName,CallArgs,NewEnv) ->
   freshpidserver ! {self(),new_pid},
   NewPid = {c_literal,[],receive FreshPid -> FreshPid end}, 
   NewProc = {NewPid,
+              [],
               {NewEnv,{c_apply,[],CallName,CallArgs}},
               []},
   {{Var,NewPid},NewProc}.
-eval_conc(rec,Var,ReceiveClauses,Pid,Env,Exp,Mail) ->
+eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
+  % Remove this case? This will never happen...
   case length(Mail) of
     0 ->
       io:fwrite("Error: No messages in mailbox~n"),
-        {Pid,{Env,Exp},Mail};
+        {Pid,Hist,{Env,Exp},Mail};
     _Other ->
       case matchrec(ReceiveClauses,Mail) of
         no_match ->
-          io:fwrite("Error: No matching messages~n"),
-          {Pid,{Env,Exp},Mail};
+          io:fwrite("Errqor: No matching messages~n"),
+          {Pid,Hist,{Env,Exp},Mail};
         {Bindings,NewExp,NewMail} ->
           NewEnv = Env ++ [{Var,NewExp}] ++ Bindings,
-          {Pid,{NewEnv,Exp},NewMail}
+          {Pid,[rec|Hist],{NewEnv,Exp},NewMail}
       end
   end.
 
@@ -171,24 +173,26 @@ eval_seq(Env,Exp) ->
 eval_step({Gamma,Procs},Pid) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   {Proc,RestProcs} = utils:select_proc(Procs,Pid),
-  {Pid,{Env,Exp},Mail} = Proc,
+  {Pid,Hist,{Env,Exp},Mail} = Proc,
   {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
   NewSystem = 
     % Labels can contain more or less information than in the papers
     case Label of
       tau -> 
-        {Gamma,[{Pid,{NewEnv,NewExp},Mail}] ++ RestProcs};
+        %{Gamma,[{Pid,[{tau,Env,Exp}|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
+        {Gamma,[{Pid,[tau|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
+
       {self,Var} ->
         NewBind = eval_conc(self,Var,Pid),
-        {Gamma,[{Pid,{NewEnv++NewBind,NewExp},Mail}] ++ RestProcs};
+        {Gamma,[{Pid,[self|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ RestProcs};
       {send,DestPid,MsgValue} ->
         NewGamma = eval_conc(send,{Pid,DestPid,MsgValue},Gamma),
-        {NewGamma,[{Pid,{NewEnv,NewExp},Mail}] ++ RestProcs};
+        {NewGamma,[{Pid,[send|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,NewProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
-        {Gamma,[{Pid,{NewEnv++NewBind,NewExp},Mail}] ++ [NewProc] ++ RestProcs};
+        {Gamma,[{Pid,[spawn|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ [NewProc] ++ RestProcs};
       {rec,Var,ReceiveClauses} ->
-        NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,NewEnv,NewExp,Mail),
+        NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
         {Gamma,[NewProc] ++ RestProcs}
     end,
   NewSystem.
@@ -207,9 +211,9 @@ eval_sched({Gamma,Procs}) ->
       {_SrcPid,DestPid,MsgValue} = RandMsg,
       % TODO: Fix case when DestPid process does not exist
       {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
-      {Pid,{Env,Exp},Mail} = Proc,
+      {Pid,Hist,{Env,Exp},Mail} = Proc,
       NewMail = Mail ++ [MsgValue],
-      NewProc = {Pid,{Env,Exp},NewMail},
+      NewProc = {Pid,Hist,{Env,Exp},NewMail},
       {NewGamma,[NewProc] ++ RestProcs}
   end.
 
@@ -264,7 +268,7 @@ can_eval({[{_SrcPid,DestPid,_MsgValue}|RestMsgs],Procs},?ID_GAMMA) ->
   end;
 can_eval({_Gamma,Procs},Pid) ->
   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
-  {Pid,{_Env,Exp},Mail} = Proc,
+  {Pid,_Hist,{_Env,Exp},Mail} = Proc,
   case is_exp(Exp) of
     true ->
       case cerl:type(Exp) of

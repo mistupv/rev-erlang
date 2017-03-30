@@ -9,7 +9,7 @@ start() ->
 loop() ->
   receive
     {SenderPid,Semantics,{Gamma,Procs}} ->
-      Pids = [?ID_GAMMA] ++ [Pid || {Pid,_,_} <- Procs],
+      Pids = [?ID_GAMMA] ++ [Pid || {Pid,_,_,_} <- Procs],
       RandPid = randPid(Semantics,Pids,{Gamma,Procs}),
       SenderPid ! RandPid,
       loop();
@@ -20,7 +20,7 @@ randPid(_Semantics,[],_System) ->
   null_pid;
 randPid(Semantics,Pids,System) ->
   PidsLen = length(Pids),
-  RandElem = random:uniform(PidsLen),
+  RandElem = rand:uniform(PidsLen),
   RandPid = lists:nth(RandElem,Pids),
   case Semantics:can_eval(System,RandPid) of
     false ->

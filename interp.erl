@@ -54,6 +54,7 @@ start(ModuleFile, {Fun,Args}) ->
   Gamma = [],
   %InitF = {c_var,[],Fun},
   Procs = [{{c_literal,[],1},
+           [],
            {[],{c_apply,[],{c_var,[],Fun},Args}},
            []}],
   System = {Gamma,Procs},
