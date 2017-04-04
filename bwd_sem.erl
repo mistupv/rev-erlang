@@ -15,7 +15,7 @@ eval_step({Gamma,Procs},Pid) ->
       OldProc = {Pid,RestHist,{OldEnv,OldExp},Mail},
       {Gamma,[OldProc|RestProcs]};
     % % TODO: The following cases have not been tested
-    % {send,_,_,_} -> false;
+    {send,DestPid,OldEnv,OldExp} -> ;
     {spawn,SpawnPid,OldEnv,OldExp} ->
       {_SpawnProc,OldRestProcs} = utils:select_proc(RestProcs,SpawnPid),
       OldProc = {Pid,RestHist,{OldEnv,OldExp},Mail},
@@ -44,8 +44,13 @@ can_eval({_Gamma,Procs},Pid) ->
         {tau,_,_} -> true;
         {self,_,_} -> true;
         % TODO: Study these cases
-        {send,_,_,_} -> false;
-        {spawn,_,_,_} -> false;
+        {send,DestPid,_,_} ->
+          case lists:keyfind(DestPid,2,Gamma) of
+            false -> false;
+            _Other -> true
+          end;
+        % it is safe to assume that the spawned process is alive
+        {spawn,_,_,_} -> true;
         {rec,_,_,_} -> false
       end
   end.
