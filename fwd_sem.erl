@@ -1,7 +1,7 @@
 -module(fwd_sem).
 -export([eval_step/2,eval_sched/1,can_eval/2]).
 
--define(ID_GAMMA,0).
+-include("rev_erlang.hrl").
 
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Gamma) -> Gamma ++ [FullMsg].
@@ -276,7 +276,7 @@ can_eval({[],_Procs},?ID_GAMMA) ->
   false;
 % TODO: Should the selected message be random, rather than the one in the head?
 can_eval({[{_SrcPid,DestPid,_MsgValue}|RestMsgs],Procs},?ID_GAMMA) ->
-  DestProcs = [Item || Item = {P,_,_._} <- Procs, P == DestPid],
+  DestProcs = [Item || Item = {P,_,_,_} <- Procs, P == DestPid],
   case DestProcs of
     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
     _Other -> true

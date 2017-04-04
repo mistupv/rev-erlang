@@ -1,12 +1,8 @@
 -module(interp).
 -export([start/2]).
 
+-include("rev_erlang.hrl").
 -include_lib("wx/include/wx.hrl").
-
--define(ID_FORWARD_STEP,  40).
--define(ID_BACKWARD_STEP, 41).
-
--define(ID_GAMMA,0).
                       
 start(ModuleFile, {Fun,Args}) ->
   {ok,_,CoreForms} = compile:file(ModuleFile,[to_core,binary]),

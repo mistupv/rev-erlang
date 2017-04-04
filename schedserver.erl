@@ -1,7 +1,7 @@
 -module(schedserver).
 -export([start/0]).
 
--define(ID_GAMMA,0).
+-include("rev_erlang.hrl").
 
 start() ->
   loop().
