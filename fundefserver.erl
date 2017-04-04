@@ -14,12 +14,5 @@ loop(FunDefs) ->
   end.
 
 findDef(FunName,FunDefs) ->
-  
-  FunDefList = [FunD || {FunN, FunD} <- FunDefs, FunN == FunName],%, cerl:var_name(FunDef)],
-  %io:fwrite("~p~n",[FunDefList])
-  hd(FunDefList)
-  % case length(FunDefList) of
-  %   1 -> hd(FunDefList);
-  %   _Other -> nothing
-  % end.
-.
+  FunDefList = [FunD || {FunN, FunD} <- FunDefs, FunN == FunName],
+  hd(FunDefList).
