@@ -22,7 +22,7 @@ eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
     _Other ->
       case matchrec(ReceiveClauses,Mail) of
         no_match ->
-          io:fwrite("Errqor: No matching messages~n"),
+          io:fwrite("Error: No matching messages~n"),
           {Pid,Hist,{Env,Exp},Mail};
         {Bindings,NewExp,NewMail} ->
           NewEnv = Env ++ [{Var,NewExp}] ++ Bindings,
@@ -36,10 +36,22 @@ eval_seq(Env,Exp) ->
       [Value] = [Val || {Var,Val} <- Env, Var == Exp],
       {Env,Value,tau};
     cons ->
+      % I think we must return the updated expression
+      ConsHdExp = cerl:cons_hd(Exp),
+      ConsTlExp = cerl:cons_tl(Exp),
       case is_exp(cerl:cons_hd(Exp)) of
-        true -> eval_seq(Env,cerl:cons_hd(Exp));
-        false -> eval_seq(Env,cerl:cons_tl(Exp))
-      end;
+        true ->
+          {NewEnv,NewConsHdExp,Label} = eval_seq(Env,ConsHdExp),
+          NewExp = cerl:update_c_cons(Exp,
+                                      NewConsHdExp,
+                                      ConsTlExp);
+        false ->
+          {NewEnv,NewConsTlExp,Label} = eval_seq(Env,ConsTlExp),
+          NewExp = cerl:update_c_cons(Exp,
+                                      ConsHdExp,
+                                      NewConsTlExp)
+      end,
+      {NewEnv,NewExp,Label};
     tuple ->
       eval_list(Env,cerl:tuples_es(Exp));
     apply -> 
@@ -59,7 +71,8 @@ eval_seq(Env,Exp) ->
               FunBody = cerl:fun_body(FunDef),
               FunArgs = cerl:fun_vars(FunDef)
           end,
-          NewEnv = lists:zip(FunArgs, ApplyArgs),
+          io:fwrite("ARGS: ~p~n",[ApplyArgs]),
+          NewEnv = utils:zip_core(FunArgs, ApplyArgs),
           {NewEnv,FunBody,tau}
       end;
     'case' ->
@@ -113,10 +126,10 @@ eval_seq(Env,Exp) ->
           freshvarserver ! {self(),new_var},
           Var = receive NewVar -> NewVar end,
           FunName = lists:nth(2,CallArgs),
-          FunCoreArgs = lists:nth(3,CallArgs),
+          FunArgs = lists:nth(3,CallArgs),
           % here, Core just transforms Args to a literal
           %({c_literal,[],[e_1,e_2]} without transforming e_1)
-          {c_literal,_,FunArgs} = FunCoreArgs,
+          %{c_literal,_,FunArgs} = FunCoreArgs,
           {Env,Var,{spawn,{Var,FunName,FunArgs}}};
         _Other ->
         % should we also eval module or name?
@@ -181,7 +194,6 @@ eval_step({Gamma,Procs},Pid) ->
       tau -> 
         %{Gamma,[{Pid,[{tau,Env,Exp}|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
         {Gamma,[{Pid,[tau|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
-
       {self,Var} ->
         NewBind = eval_conc(self,Var,Pid),
         {Gamma,[{Pid,[self|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ RestProcs};
@@ -190,7 +202,7 @@ eval_step({Gamma,Procs},Pid) ->
         {NewGamma,[{Pid,[send|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,NewProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
-        {Gamma,[{Pid,[spawn|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ [NewProc] ++ RestProcs};
+        {Gamma,[{Pid,[spawn|Hist],{NewEnv++[NewBind],NewExp},Mail}] ++ [NewProc] ++ RestProcs};
       {rec,Var,ReceiveClauses} ->
         NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
         {Gamma,[NewProc] ++ RestProcs}
