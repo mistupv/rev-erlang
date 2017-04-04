@@ -26,7 +26,7 @@ eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
           {Pid,Hist,{Env,Exp},Mail};
         {Bindings,NewExp,NewMail} ->
           NewEnv = Env ++ [{Var,NewExp}] ++ Bindings,
-          {Pid,[rec|Hist],{NewEnv,Exp},NewMail}
+          {Pid,[{rec,Mail,Env,Exp}|Hist],{NewEnv,Exp},NewMail}
       end
   end.
 
@@ -192,17 +192,19 @@ eval_step({Gamma,Procs},Pid) ->
     % Labels can contain more or less information than in the papers
     case Label of
       tau -> 
-        %{Gamma,[{Pid,[{tau,Env,Exp}|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
-        {Gamma,[{Pid,[tau|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
+        {Gamma,[{Pid,[{tau,Env,Exp}|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
+        %{Gamma,[{Pid,[tau|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
       {self,Var} ->
         NewBind = eval_conc(self,Var,Pid),
-        {Gamma,[{Pid,[self|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ RestProcs};
+        {Gamma,[{Pid,[{self,Env,Exp}|Hist],{NewEnv++NewBind,NewExp},Mail}] ++ RestProcs};
       {send,DestPid,MsgValue} ->
         NewGamma = eval_conc(send,{Pid,DestPid,MsgValue},Gamma),
-        {NewGamma,[{Pid,[send|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
+        {NewGamma,[{Pid,[{send,DestPid,Env,Exp}|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,NewProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
-        {Gamma,[{Pid,[spawn|Hist],{NewEnv++[NewBind],NewExp},Mail}] ++ [NewProc] ++ RestProcs};
+        {NewPid,_,_,_} = NewProc,
+        {Gamma,[{Pid,[{spawn,NewPid,Env,Exp}|Hist],{NewEnv++[NewBind],NewExp},Mail}] ++ [NewProc] ++ RestProcs};
+        % TODO: Put 'rec' hist here
       {rec,Var,ReceiveClauses} ->
         NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
         {Gamma,[NewProc] ++ RestProcs}
@@ -272,8 +274,9 @@ matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
   end.
 can_eval({[],_Procs},?ID_GAMMA) ->
   false;
+% TODO: Should the selected message be random, rather than the one in the head?
 can_eval({[{_SrcPid,DestPid,_MsgValue}|RestMsgs],Procs},?ID_GAMMA) ->
-  DestProcs = [{P,S,M} || {P,S,M} <- Procs, P == DestPid],
+  DestProcs = [Item || Item = {P,_,_._} <- Procs, P == DestPid],
   case DestProcs of
     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
     _Other -> true
