@@ -1,10 +1,10 @@
 -module(interp).
--export([start/2]).
+-export([start/3]).
 
 -include("rev_erlang.hrl").
 -include_lib("wx/include/wx.hrl").
                       
-start(ModuleFile, {Fun,Args}) ->
+start(ModuleFile,Fun,Args) ->
   {ok,_,CoreForms} = compile:file(ModuleFile,[to_core,binary]),
   Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
   CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
@@ -47,13 +47,10 @@ start(ModuleFile, {Fun,Args}) ->
     false -> ok
   end,
   register(freshvarserver,FreshVarServer),
-  Gamma = [],
-  %InitF = {c_var,[],Fun},
-  Procs = [{{c_literal,[],1},
-           [],
-           {[],{c_apply,[],{c_var,[],Fun},Args}},
-           []}],
-  System = {Gamma,Procs},
+  Proc = #proc{pid = cerl:c_int(1),
+               exp = cerl:c_apply(Fun,Args)},
+  Procs = [Proc],
+  System = #sys{procs = Procs},
   io:fwrite("~p~n",[System]),
   eval(System),
   fdserver ! terminate,
@@ -83,6 +80,6 @@ eval(System) ->
     false ->
       io:fwrite("System is reduced!~n");
     true ->
-      io:fwrite("~p~n",[NewSystem])
+      io:fwrite("~s~n",[utils:pp_system(NewSystem)])
   end,
   eval(NewSystem).

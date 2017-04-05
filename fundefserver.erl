@@ -7,12 +7,8 @@ start(FunDefs) ->
 loop(FunDefs) ->
   receive
     {Pid,FunName} ->
-      FunDef = findDef(FunName,FunDefs),
+      {_,FunDef} = lists:keyfind(FunName,1,FunDefs),%findDef(FunName,FunDefs),
       Pid ! FunDef,
       loop(FunDefs);
     terminate -> ok
   end.
-
-findDef(FunName,FunDefs) ->
-  FunDefList = [FunD || {FunN, FunD} <- FunDefs, FunN == FunName],
-  hd(FunDefList).

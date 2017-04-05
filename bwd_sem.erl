@@ -3,39 +3,40 @@
 
 -include("rev_erlang.hrl").
 
-eval_step({Gamma,Procs},Pid) ->
+eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
   {Proc,RestProcs} = utils:select_proc(Procs,Pid),
-  {Pid,[CurHist|RestHist],_,Mail} = Proc,
+  #proc{pid = Pid, hist = [CurHist|RestHist]} = Proc,
   case CurHist of
     {tau,OldEnv,OldExp} ->
-      OldProc = {Pid,RestHist,{OldEnv,OldExp},Mail},
-      {Gamma,[OldProc|RestProcs]};
+      OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
+      #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
     {self,OldEnv,OldExp} ->
-      OldProc = {Pid,RestHist,{OldEnv,OldExp},Mail},
-      {Gamma,[OldProc|RestProcs]};
+      OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
+      #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
     % % TODO: The following cases have not been tested
     %{send,DestPid,OldEnv,OldExp} -> ;
     {spawn,SpawnPid,OldEnv,OldExp} ->
       {_SpawnProc,OldRestProcs} = utils:select_proc(RestProcs,SpawnPid),
-      OldProc = {Pid,RestHist,{OldEnv,OldExp},Mail},
-      {Gamma,[OldProc|OldRestProcs]}
+      OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
+      #sys{msgs = Msgs, procs = [OldProc|OldRestProcs]}
     % {rec,_,_,_} -> false
   end.
 
 eval_sched(System) ->
   System.
 
-can_eval({[],_Procs},?ID_GAMMA) -> false;
-can_eval({[{SrcPid,DestPid,_MsgValue}|RestMsgs],Procs},?ID_GAMMA) ->
-  SrcProcs = [Item || Item = {P,_,_,_} <- Procs, P == SrcPid],
+can_eval(#sys{msgs = []},?ID_GAMMA) ->
+  false;
+can_eval(#sys{msgs = [#msg{src = SrcPid,dest = DestPid}|RestMsgs], procs = Procs},?ID_GAMMA) ->
+  SrcProcs = [Proc || Proc <- Procs, Proc#proc.pid == SrcPid],
   case SrcProcs of
     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
-    [{_P,[{send,DestPid,_E,_M}|_Hist]}] -> true
+    [#proc{hist = [{send,DestPid,_E,_M}|_Hist]}] -> true
   end;
-can_eval({Gamma,Procs},Pid) ->
+can_eval(#sys{msgs = Msgs, procs = Procs},Pid) ->
   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
-  {Pid,Hist,{_Env,_Exp},_Mail} = Proc,
+  #proc{pid = Pid, hist = Hist} = Proc,
   case Hist of
     [] -> false;
     [CurHist|_RestHist] ->
@@ -44,7 +45,7 @@ can_eval({Gamma,Procs},Pid) ->
         {self,_,_} -> true;
         % TODO: Study these cases
         {send,DestPid,_,_} ->
-          case lists:keyfind(DestPid,2,Gamma) of
+          case lists:keyfind(DestPid,#msg.dest,Msgs) of
             false -> false;
             _Other -> true
           end;

@@ -8,9 +8,9 @@ start() ->
 
 loop() ->
   receive
-    {SenderPid,Semantics,{Gamma,Procs}} ->
-      Pids = [?ID_GAMMA] ++ [Pid || {Pid,_,_,_} <- Procs],
-      RandPid = randPid(Semantics,Pids,{Gamma,Procs}),
+    {SenderPid,Semantics,#sys{msgs = Msgs, procs = Procs}} ->
+      Pids = [?ID_GAMMA] ++ [Pid || #proc{pid = Pid} <- Procs],
+      RandPid = randPid(Semantics,Pids,#sys{msgs = Msgs, procs = Procs}),
       SenderPid ! RandPid,
       loop();
     terminate -> ok
