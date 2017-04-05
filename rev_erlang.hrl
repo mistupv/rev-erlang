@@ -15,3 +15,7 @@
 -record(msg, {src,
               dest,
               val}).
+
+% TODO: Add types
+-record(sys, {msgs  = [],
+              procs = []}).
