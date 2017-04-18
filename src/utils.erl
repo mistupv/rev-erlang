@@ -1,26 +1,29 @@
 -module(utils).
 -export([select_proc/2,zip_core/2,pp_system/1]).
 
+-include("rev_erlang.hrl").
+
 select_proc(Procs,Pid) ->
-  [Proc] = [Item || Item = {P,_,_,_} <- Procs, P == Pid],
-  RestProcs = [Item || Item = {P,_,_,_} <- Procs, P /= Pid],
+  [Proc] = [ P || P <- Procs, P#proc.pid == Pid],
+  RestProcs = [ P || P <- Procs, P#proc.pid, P /= Pid],
   {Proc,RestProcs}.
 
-zip_core([],{c_literal,_,[]}) ->
-  [];
-zip_core([E|Es],{c_cons,_Ann,Head,Rest}) ->
-  [{E,Head}|zip_core(Es,Rest)].
+% TODO: Improve zip_core
+% zip_core([],{c_literal,_,[]}) ->
+%   [];
+% zip_core([E|Es],{c_cons,_Ann,Head,Rest}) ->
+%   [{E,Head}|zip_core(Es,Rest)].
 
-pp_system({Gamma,Procs}) ->
-  pp_gamma(Gamma) ++ ";" ++ pp_procs(Procs).
+% pp_system(#sys{msgs = Msgs, procs = Procs}) ->
+%   pp_msgs(Msgs) ++ ";" ++ pp_procs(Procs).
 
-pp_gamma([]) -> "[]";
-pp_gamma(Gamma) -> "[" ++ string:join([pp_msg(X) || X <- Gamma],",") ++ "]".
+% pp_msgs([]) -> "[]";
+% pp_msgs(Msgs) -> "[" ++ string:join([pp_msg(X) || X <- Msgs],",") ++ "]".
 
-pp_procs(Procs) -> "".
+% pp_procs(_Procs) -> "".
 
-pp_msg({SrcPid,DestPid,MsgValue}) ->
-  "{" ++ pp(SrcPid) ++ "," ++ pp(DestPid) ++ "," ++ pp(MsgValue) ++ "}".
-
-% TODO: Ask Tama about this
-pp(X) -> "".%erl_prettypr:format(X).
+% pp_msg(#msg{src = SrcPid, dest = DestPid, val= MsgValue}) ->
+%   "{" ++ pp(SrcPid) ++ "," ++ pp(DestPid) ++ "," ++ pp(MsgValue) ++ "}".
+% %    io:fwrite(" ARBRE ~s~n",[lists:flatten()]),
+% % TODO: Ask Tama about this
+% pp(X) -> core_pp:format(X).
