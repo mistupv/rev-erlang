@@ -51,7 +51,7 @@ start(ModuleFile,Fun,Args) ->
                exp = cerl:c_apply(Fun,Args)},
   Procs = [Proc],
   System = #sys{procs = Procs},
-  io:fwrite("~p~n",[System]),
+  io:fwrite("~s~n",[utils:pp_system(System)]),
   eval(System),
   fdserver ! terminate,
   schedserver ! terminate,
