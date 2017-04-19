@@ -1,5 +1,5 @@
 -module(fwd_sem).
--export([eval_step/2,eval_sched/1,can_eval/2]).
+-export([eval_step/2,eval_sched/1,eval_opts/1]).
 
 -include("rev_erlang.hrl").
 
@@ -275,34 +275,72 @@ matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
     {false,_} ->
       matchrec(Clauses,RestMsgs,[CurMsg] ++ AccMsgs)
   end.
-can_eval(#sys{msgs = []},?ID_GAMMA) ->
-  false;
-% TODO: Should the selected message be random, rather than the one in the head?
-can_eval(#sys{msgs = [#msg{dest = DestPid}|RestMsgs], procs = Procs},?ID_GAMMA) ->
-  DestProcs = [Proc || Proc <- Procs, Proc#proc.pid == DestPid],
+
+eval_opts(System) ->
+  SchedOpts = eval_sched_opts(System),
+  ProcsOpts = eval_procs_opts(System),
+  SchedOpts ++ ProcsOpts.
+
+eval_sched_opts(#sys{msgs = []}) ->
+  [];
+eval_sched_opts(#sys{msgs = [CurMsg|RestMsgs], procs = Procs}) ->
+  DestPid = CurMsg#msg.dest,
+  DestProcs = [ P || P <- Procs, P#proc.pid == DestPid],
   case DestProcs of
-    [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
-    _Other -> true
-  end;
-can_eval(#sys{procs = Procs},Pid) ->
-  {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
-  Exp  = Proc#proc.exp,
-  Mail = Proc#proc.mail,
+    [] ->
+      eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs});
+    _Other ->
+      Time = CurMsg#msg.time,
+      [{sched,Time}|eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs})]
+  end.
+
+eval_procs_opts(#sys{procs = []}) ->
+  [];
+eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
+  Exp = CurProc#proc.exp,
   case is_exp(Exp) of
     true ->
       case cerl:type(Exp) of
-        'receive' when length(Mail) == 0 -> false;
         'receive' ->
           ReceiveClauses = cerl:receive_clauses(Exp),
+          Mail = CurProc#proc.mail,
           case matchrec(ReceiveClauses, Mail) of
-            no_match -> false;
-            _Other -> true
+            no_match -> eval_procs_opts(#sys{procs = RestProcs});
+            _Other ->
+              Pid = CurProc#proc.pid,
+              [{proc,Pid}]
           end;
-          _Other -> true
+        _Other ->
+          Pid = CurProc#proc.pid,
+          [{proc,Pid}]
       end;
-    false -> false
+    false -> eval_procs_opts(#sys{procs = RestProcs})
   end.
 
-
-
-
+% can_eval(#sys{msgs = []},?ID_GAMMA) ->
+%   false;
+% % TODO: Should the selected message be random, rather than the one in the head?
+% can_eval(#sys{msgs = [#msg{dest = DestPid}|RestMsgs], procs = Procs},?ID_GAMMA) ->
+%   DestProcs = [Proc || Proc <- Procs, Proc#proc.pid == DestPid],
+%   case DestProcs of
+%     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
+%     _Other -> true
+%   end;
+% can_eval(#sys{procs = Procs},Pid) ->
+%   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
+%   Exp  = Proc#proc.exp,
+%   Mail = Proc#proc.mail,
+%   case is_exp(Exp) of
+%     true ->
+%       case cerl:type(Exp) of
+%         'receive' when length(Mail) == 0 -> false;
+%         'receive' ->
+%           ReceiveClauses = cerl:receive_clauses(Exp),
+%           case matchrec(ReceiveClauses, Mail) of
+%             no_match -> false;
+%             _Other -> true
+%           end;
+%           _Other -> true
+%       end;
+%     false -> false
+%   end.
