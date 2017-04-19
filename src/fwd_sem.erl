@@ -70,7 +70,8 @@ eval_seq(Env,Exp) ->
               FunBody = cerl:fun_body(FunDef),
               FunArgs = cerl:fun_vars(FunDef)
           end,
-          NewEnv = utils:zip_core(FunArgs, ApplyArgs),
+          % standard zip is used here (pretty-printer forces it)
+          NewEnv = lists:zip(FunArgs,ApplyArgs),
           {NewEnv,FunBody,tau}
       end;
     'case' ->
@@ -119,15 +120,15 @@ eval_seq(Env,Exp) ->
       CallArgs = cerl:call_args(Exp),
       CallModule = cerl:call_module(Exp),
       CallName = cerl:call_name(Exp),
+
       case {CallModule, CallName} of
         {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} -> 
           freshvarserver ! {self(),new_var},
           Var = receive NewVar -> NewVar end,
           FunName = lists:nth(2,CallArgs),
-          FunArgs = lists:nth(3,CallArgs),
           % here, Core just transforms Args to a literal
           %({c_literal,[],[e_1,e_2]} without transforming e_1)
-          %{c_literal,_,FunArgs} = FunCoreArgs,
+          FunArgs = utils:list_from_core(lists:nth(3,CallArgs)),
           {Env,Var,{spawn,{Var,FunName,FunArgs}}};
         _Other ->
         % should we also eval module or name?
@@ -242,7 +243,7 @@ is_exp(Exp) ->
     literal -> false;
     nil -> false;
     cons -> is_exp(cerl:cons_hd(Exp)) or is_exp(cerl:cons_tl(Exp));
-    tuple -> is_exp(cerl:tuples_es(Exp));
+    tuple -> is_exp(cerl:tuple_es(Exp));
     %values -> lists:all(is_exp, cerl:values_es(Exp));
     _Other -> true
   end.
