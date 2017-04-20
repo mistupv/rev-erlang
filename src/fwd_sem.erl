@@ -30,6 +30,12 @@ eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
   end.
 
 eval_seq(Env,Exp) ->
+  case is_list(Exp) of
+    true -> eval_list(Env,Exp);
+    false -> eval_seq_1(Env,Exp)
+  end.
+
+eval_seq_1(Env,Exp) ->
   case cerl:type(Exp) of
     var ->
       [Value] = [Val || {Var,Val} <- Env, Var == Exp],
