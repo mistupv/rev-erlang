@@ -29,12 +29,6 @@ start(ModuleFile,Fun,Args) ->
     false -> ok
   end,
   register(fdserver,FunDefServer),
-  % SchedServer = spawn(schedserver,start,[]),
-  % case lists:member(schedserver,registered()) of
-  %   true -> unregister(schedserver);
-  %   false -> ok
-  % end,
-  % register(schedserver,SchedServer),
   FreshPidServer = spawn(freshpidserver,start,[]),
   case lists:member(freshpidserver,registered()) of
     true -> unregister(freshpidserver);
@@ -60,8 +54,8 @@ start(ModuleFile,Fun,Args) ->
   io:fwrite("~s~n",[utils:pp_system(System)]),
   eval(System),
   fdserver ! terminate,
-  % schedserver ! terminate,
   freshpidserver ! terminate,
+  freshtimeserver ! terminate,
   freshvarserver ! terminate.
 
 eval(System) ->

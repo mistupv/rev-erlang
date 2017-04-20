@@ -6,7 +6,6 @@
 eval_conc(self,Var,Pid) -> [{Var,Pid}];
 eval_conc(send,FullMsg,Msgs) -> Msgs ++ [FullMsg].
 eval_conc(spawn,Var,CallName,CallArgs,NewEnv) ->
-  % TODO: Check if this is working
   freshpidserver ! {self(),new_pid},
   NewPid = cerl:c_int(receive FreshPid -> FreshPid end),
   NewProc = #proc{pid = NewPid, env = NewEnv, exp = cerl:c_apply(CallName,CallArgs)},
@@ -239,7 +238,6 @@ is_exp(Exp) ->
     nil -> false;
     cons -> is_exp(cerl:cons_hd(Exp)) or is_exp(cerl:cons_tl(Exp));
     tuple -> is_exp(cerl:tuple_es(Exp));
-    %values -> lists:all(is_exp, cerl:values_es(Exp));
     _Other -> true
   end.
 
@@ -309,30 +307,3 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
     false -> eval_procs_opts(#sys{procs = RestProcs})
   end.
 
-% can_eval(#sys{msgs = []},?ID_GAMMA) ->
-%   false;
-% % TODO: Should the selected message be random, rather than the one in the head?
-% can_eval(#sys{msgs = [#msg{dest = DestPid}|RestMsgs], procs = Procs},?ID_GAMMA) ->
-%   DestProcs = [Proc || Proc <- Procs, Proc#proc.pid == DestPid],
-%   case DestProcs of
-%     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
-%     _Other -> true
-%   end;
-% can_eval(#sys{procs = Procs},Pid) ->
-%   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
-%   Exp  = Proc#proc.exp,
-%   Mail = Proc#proc.mail,
-%   case is_exp(Exp) of
-%     true ->
-%       case cerl:type(Exp) of
-%         'receive' when length(Mail) == 0 -> false;
-%         'receive' ->
-%           ReceiveClauses = cerl:receive_clauses(Exp),
-%           case matchrec(ReceiveClauses, Mail) of
-%             no_match -> false;
-%             _Other -> true
-%           end;
-%           _Other -> true
-%       end;
-%     false -> false
-%   end.

@@ -53,32 +53,3 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
       end
   end.
 
-% can_eval(#sys{msgs = []},?ID_GAMMA) ->
-%   false;
-% can_eval(#sys{msgs = [#msg{src = SrcPid,dest = DestPid}|RestMsgs], procs = Procs},?ID_GAMMA) ->
-%   SrcProcs = [Proc || Proc <- Procs, Proc#proc.pid == SrcPid],
-%   case SrcProcs of
-%     [] -> can_eval({RestMsgs,Procs},?ID_GAMMA);
-%     [#proc{hist = [{send,DestPid,_E,_M}|_Hist]}] -> true
-%   end;
-% can_eval(#sys{msgs = Msgs, procs = Procs},Pid) ->
-%   %io:fwrite("Chosen Pid: ~p~n",[Pid]),
-%   {Proc,_RestProcs} = utils:select_proc(Procs,Pid),
-%   #proc{pid = Pid, hist = Hist} = Proc,
-%   case Hist of
-%     [] -> false;
-%     [CurHist|_RestHist] ->
-%       case CurHist of
-%         {tau,_,_} -> true;
-%         {self,_,_} -> true;
-%         % TODO: Study these cases
-%         {send,DestPid,_,_} ->
-%           case lists:keyfind(DestPid,#msg.dest,Msgs) of
-%             false -> false;
-%             _Other -> true
-%           end;
-%         % it is safe to assume that the spawned process is alive
-%         {spawn,_,_,_} -> true;
-%         {rec,_,_,_} -> false
-%       end
-%   end.
