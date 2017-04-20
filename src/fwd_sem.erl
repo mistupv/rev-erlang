@@ -185,7 +185,6 @@ eval_seq(Env,Exp) ->
   end.
 
 eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
-  %io:fwrite("Chosen Pid: ~p~n",[Pid]),
   {Proc,RestProcs} = utils:select_proc(Procs,Pid),
   #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail} = Proc,
   {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
@@ -195,7 +194,6 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
       tau ->
         NewProc = Proc#proc{hist = [{tau,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
-        %{Msgs,[{Pid,[tau|Hist],{NewEnv,NewExp},Mail}] ++ RestProcs};
       {self,Var} ->
         NewBind = eval_conc(self,Var,Pid),
         NewProc = Proc#proc{hist = [{self,Env,Exp}|Hist], env = NewEnv++NewBind, exp = NewExp},
@@ -208,11 +206,11 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
         {NewBind,SpawnProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
         #proc{pid = SpawnPid} = SpawnProc,
         NewProc = Proc#proc{hist = [{spawn,SpawnPid,Env,Exp}|Hist], env = NewEnv++[NewBind], exp = NewExp},
-        #sys{msgs = Msgs, procs = [NewProc] ++ [SpawnProc] ++ RestProcs};
+        #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
         % TODO: Put 'rec' hist here
       {rec,Var,ReceiveClauses} ->
         NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
-        #sys{msgs = Msgs, procs = [NewProc] ++ RestProcs}
+        #sys{msgs = Msgs, procs = [NewProc|RestProcs]}
     end,
   NewSystem.
 
@@ -235,7 +233,6 @@ eval_sched(#sys{msgs = Msgs, procs = Procs}) ->
       NewProc = Proc#proc{mail = NewMail},
       {NewMsgs,[NewProc] ++ RestProcs}
   end.
-
 
 is_exp([]) -> false;
 is_exp(Exp) when is_list(Exp) ->
@@ -293,13 +290,14 @@ eval_sched_opts(#sys{msgs = [CurMsg|RestMsgs], procs = Procs}) ->
       eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs});
     _Other ->
       Time = CurMsg#msg.time,
-      [{sched,Time}|eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs})]
+      [{?MODULE,sched,Time}|eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs})]
   end.
 
 eval_procs_opts(#sys{procs = []}) ->
   [];
 eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
   Exp = CurProc#proc.exp,
+  Pid = CurProc#proc.pid,
   case is_exp(Exp) of
     true ->
       case cerl:type(Exp) of
@@ -308,13 +306,9 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
           Mail = CurProc#proc.mail,
           case matchrec(ReceiveClauses, Mail) of
             no_match -> eval_procs_opts(#sys{procs = RestProcs});
-            _Other ->
-              Pid = CurProc#proc.pid,
-              [{proc,Pid}]
+            _Other -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})]
           end;
-        _Other ->
-          Pid = CurProc#proc.pid,
-          [{proc,Pid}]
+        _Other -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})]
       end;
     false -> eval_procs_opts(#sys{procs = RestProcs})
   end.
