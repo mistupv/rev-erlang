@@ -150,9 +150,11 @@ eval_seq(Env,Exp) ->
                       Var = receive NewVar -> NewVar end,
                       {Env,Var,{self,Var}};
                     {c_literal,_,'!'} ->
+                      freshtimeserver ! {self(),new_time},
+                      Time = receive NewTime -> NewTime end,
                       DestPid = lists:nth(1,CallArgs),
                       MsgValue = lists:nth(2,CallArgs),
-                      {Env,MsgValue,{send,DestPid,MsgValue}};
+                      {Env,MsgValue,{send,Time,DestPid,MsgValue}};
                     _OtherName ->   
                       erlang:error(undef_name)
                   end;
@@ -198,9 +200,9 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
         NewBind = eval_conc(self,Var,Pid),
         NewProc = Proc#proc{hist = [{self,Env,Exp}|Hist], env = NewEnv++NewBind, exp = NewExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
-      {send,DestPid,MsgValue} ->
-        NewMsgs = eval_conc(send,#msg{src = Pid, dest = DestPid, val = MsgValue}, Msgs),
-        NewProc = Proc#proc{hist = [{send,DestPid,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
+      {send,Time,DestPid,MsgValue} ->
+        NewMsgs = eval_conc(send,#msg{time = Time, src = Pid, dest = DestPid, val = MsgValue}, Msgs),
+        NewProc = Proc#proc{hist = [{send,Time,DestPid,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
         #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,SpawnProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),

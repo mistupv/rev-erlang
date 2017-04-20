@@ -12,7 +12,8 @@
                mail = []}).
 
 % TODO: Add types
--record(msg, {src,
+-record(msg, {time,
+              src,
               dest,
               val}).
 

@@ -31,8 +31,9 @@ pp_procs(Procs) ->
   ProcsList = [pp_proc(Proc) || Proc <- Procs],
   string:join(ProcsList," &\n").
 
-pp_msg(#msg{src = SrcPid, dest = DestPid, val= MsgValue}) ->
+pp_msg(#msg{time = Time, src = SrcPid, dest = DestPid, val= MsgValue}) ->
   ["{",
+   integer_to_list(Time),",",
    pp(SrcPid),",",
    pp(DestPid),",",
    pp(MsgValue),

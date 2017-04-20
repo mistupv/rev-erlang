@@ -41,6 +41,12 @@ start(ModuleFile,Fun,Args) ->
     false -> ok
   end,
   register(freshpidserver,FreshPidServer),
+  FreshTimeServer = spawn(freshtimeserver,start,[]),
+  case lists:member(freshtimeserver,registered()) of
+    true -> unregister(freshtimeserver);
+    false -> ok
+  end,
+  register(freshtimeserver,FreshTimeServer),
   FreshVarServer = spawn(freshvarserver,start,[]),
   case lists:member(freshvarserver,registered()) of
     true -> unregister(freshvarserver);
