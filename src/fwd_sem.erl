@@ -1,5 +1,5 @@
 -module(fwd_sem).
--export([eval_step/2,eval_sched/1,eval_opts/1]).
+-export([eval_step/2,eval_sched/2,eval_opts/1]).
 
 -include("rev_erlang.hrl").
 
@@ -214,25 +214,15 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
     end,
   NewSystem.
 
-eval_sched(#sys{msgs = Msgs, procs = Procs}) ->
-  MsgsLen = length(Msgs),
-  case MsgsLen of
-    0 ->
-      #sys{msgs = Msgs, procs = Procs};
-    _Other ->
-      RandIdx = rand:uniform(MsgsLen),
-      RandMsg = lists:nth(RandIdx,Msgs),
-      % TODO: delete removes 1st message equal to the message,
-      % not the nth message. It can be improved...
-      NewMsgs = lists:delete(RandMsg,Msgs),
-      #msg{dest = DestPid, val = MsgValue} = RandMsg,
-      % TODO: Fix case when DestPid process does not exist
-      {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
-      #proc{mail = Mail} = Proc,
-      NewMail = Mail ++ [MsgValue],
-      NewProc = Proc#proc{mail = NewMail},
-      {NewMsgs,[NewProc] ++ RestProcs}
-  end.
+eval_sched(#sys{msgs = Msgs, procs = Procs},Id) ->
+  {Msg,RestMsgs} = utils:select_msg(Msgs,Id),
+  #msg{dest = DestPid} = Msg,
+  {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
+  #proc{mail = Mail} = Proc,
+  % TODO: Check if msg is delivered "as is"
+  NewMail = [Msg|Mail],
+  NewProc = Proc#proc{mail = NewMail},
+  #sys{msgs = RestMsgs, procs = [NewProc|RestProcs]}.
 
 is_exp([]) -> false;
 is_exp(Exp) when is_list(Exp) ->

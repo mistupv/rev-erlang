@@ -1,5 +1,6 @@
 -module(utils).
--export([select_proc/2,list_from_core/1,pp_system/1,
+-export([select_proc/2,select_msg/2,
+         list_from_core/1,pp_system/1,
          opt_to_str/1,str_to_opt/1]).
 
 -include("rev_erlang.hrl").
@@ -8,6 +9,11 @@ select_proc(Procs,Pid) ->
   [Proc] = [ P || P <- Procs, P#proc.pid == Pid],
   RestProcs = [ P || P <- Procs, P#proc.pid /= Pid],
   {Proc,RestProcs}.
+
+select_msg(Msgs,Time) ->
+  [Msg] = [ M || M <- Msgs, M#msg.time == Time],
+  RestMsgs = [ M || M <- Msgs, M#msg.time /= Time],
+  {Msg,RestMsgs}.
 
 list_from_core(Exp) ->
   case cerl:type(Exp) of
