@@ -204,15 +204,18 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
         NewProc = Proc#proc{hist = [{self,Env,Exp}|Hist], env = NewEnv++NewBind, exp = NewExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
       {send,Time,DestPid,MsgValue} ->
+        % TODO: Update send label up to current version of semantics
         NewMsgs = eval_conc(send,#msg{time = Time, src = Pid, dest = DestPid, val = MsgValue}, Msgs),
         NewProc = Proc#proc{hist = [{send,Time,DestPid,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
         #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
+        % TODO: Update spawn label up to current version of semantics (if needed)
       {spawn,{Var,CallName,CallArgs}} ->
         {NewBind,SpawnProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
         #proc{pid = SpawnPid} = SpawnProc,
         NewProc = Proc#proc{hist = [{spawn,SpawnPid,Env,Exp}|Hist], env = NewEnv++[NewBind], exp = NewExp},
         #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
         % TODO: Put 'rec' hist here
+        % TODO: Update rec label up to current version of semantics
       {rec,Var,ReceiveClauses} ->
         NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]}

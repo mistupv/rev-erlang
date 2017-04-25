@@ -67,9 +67,23 @@ pp_env(Env) ->
 pp_pair(Var,Val) ->
   ["{",pp(Var)," -> ",pp(Val),"}"].
 
-% TODO: Improve non-empty list case
 pp_hist([]) -> "[]";
-pp_hist(_Hist) -> "h:hs".
+pp_hist([CurHist|_RestHist]) ->
+  case CurHist of
+    {tau,_,_} ->
+      ["tau(t,e):hs"];
+    {self,_,_} ->
+      ["self(t,e):hs"];
+    {send,Time,DestPid,_,_} ->
+      ["send(",
+       integer_to_list(Time),",",
+       pp(DestPid),",t,e):hs"];
+    {spawn,SpawnPid,_,_} ->
+      ["spawn(",
+       pp(SpawnPid),",t,e):hs"];
+    {rec,_,_,_} ->
+      ["rec(m,t,e):hs"]
+  end.
 
 str_to_opt(Str) ->
   SemStr = [lists:nth(1,Str)],
