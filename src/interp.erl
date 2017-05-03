@@ -2,7 +2,6 @@
 -export([start/3]).
 
 -include("rev_erlang.hrl").
--include_lib("wx/include/wx.hrl").
                       
 start(ModuleFile,Fun,Args) ->
   {ok,_,CoreForms} = compile:file(ModuleFile,[to_core,binary]),
@@ -10,19 +9,8 @@ start(ModuleFile,Fun,Args) ->
   CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
   FunDefs = cerl:module_defs(CleanCoreForms),
 
-  % Wx=wx:new(),
-  % F=wxFrame:new(Wx, -1, "rev-erlang"),
-  % Panel = wxPanel:new(F),
-  % BoxSizer = wxBoxSizer:new(?wxVERTICAL),
-  % %SzFlags = [{proportion, 0}, {border, 4}, {flag, ?wxALL}],
-  % ButtonForward = wxButton:new(Panel, ?ID_FORWARD_STEP, [{label,"forward"}]),
-  % wxButton:connect(ButtonForward, command_button_clicked, []),
-  % ButtonBackward = wxButton:new(Panel, ?ID_BACKWARD_STEP, [{label,"backward"}]),
-  % wxButton:connect(ButtonBackward, command_button_clicked, []),
-  % wxSizer:add(BoxSizer, ButtonForward, []),
-  % wxSizer:add(BoxSizer, ButtonBackward, []),
-  % wxPanel:setSizer(Panel, BoxSizer),
-  % wxFrame:show(F),
+  gui:setup(),
+
   FunDefServer = spawn(fundefserver,start,[FunDefs]),
   case lists:member(fdserver,registered()) of
     true -> unregister(fdserver);
