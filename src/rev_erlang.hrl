@@ -4,6 +4,9 @@
 -define(ID_FORWARD_STEP,  40).
 -define(ID_BACKWARD_STEP, 41).
 
+% ets defs
+-define(NT_REF, '_._ref').
+
 % TODO: Add types
 -record(proc, {pid,
                hist = [],

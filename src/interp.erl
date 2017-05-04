@@ -9,7 +9,7 @@ start(ModuleFile,Fun,Args) ->
   CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
   FunDefs = cerl:module_defs(CleanCoreForms),
 
-  gui:setup(),
+  rev_erlang_gui:setup_gui(),
 
   FunDefServer = spawn(fundefserver,start,[FunDefs]),
   case lists:member(fdserver,registered()) of
