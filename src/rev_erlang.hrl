@@ -1,4 +1,6 @@
 
+-define(APP_STRING, "Reversible Erlang").
+
 -define(ID_GAMMA,0).
 
 -define(ID_FORWARD_STEP,  40).

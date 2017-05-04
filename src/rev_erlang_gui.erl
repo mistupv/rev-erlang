@@ -7,9 +7,10 @@
 
 setup_gui() ->
   Server = wx:new(),
-  Frame = wxFrame:new(Server, -1, "Reversible Erlang",[{size,?FRAME_SIZE_INIT}]),
+  Frame = wxFrame:new(Server, -1, ?APP_STRING,[{size,?FRAME_SIZE_INIT}]),
   ref_start(),
   ref_add(?FRAME, Frame),
+  setupMenu(),
   wxFrame:createStatusBar(Frame, [{id, ?STATUS_BAR}]),
   Panel = wxPanel:new(Frame),
   LeftColumnSizer = setupLeftColumnSizer(Panel),
@@ -79,6 +80,18 @@ setupRightColumnSizer(Parent) ->
   wxSizer:add(RuleButtonSizer, ButtonForward),
   wxSizer:add(RuleButtonSizer, ButtonBackward),
   CtrlsSizer.
+
+setupMenu() ->
+  MenuBar = wxMenuBar:new(),
+  File = wxMenu:new(),
+  Help = wxMenu:new(),
+  wxMenuBar:append(MenuBar,File,"&File"),
+  wxMenuBar:append(MenuBar,Help,"&Help"),
+  wxMenu:append(File,?OPEN,"Open\tCtrl-O"),
+  wxMenu:append(File,?EXIT,"Quit\tCtrl-Q"),
+  wxMenu:append(Help,?ABOUT,"About"),
+  Frame = ref_lookup(?FRAME),
+  wxFrame:setMenuBar(Frame,MenuBar).
 
 ref_add(Id, Ref) ->
     ets:insert(?NT_REF, {Id, Ref}).
