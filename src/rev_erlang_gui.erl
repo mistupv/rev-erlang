@@ -12,6 +12,11 @@ setup_gui() ->
   ref_add(?FRAME, Frame),
   setupMenu(),
   wxFrame:createStatusBar(Frame, [{id, ?STATUS_BAR}]),
+  wxEvtHandler:connect(Frame, close_window),
+  wxEvtHandler:connect(Frame, command_button_clicked),
+  wxEvtHandler:connect(Frame, command_checkbox_clicked),
+  wxEvtHandler:connect(Frame, command_menu_selected),
+  %wxEvtHandler:connect(Frame, command_text_updated),
   Panel = wxPanel:new(Frame),
   LeftColumnSizer = setupLeftColumnSizer(Panel),
   RightColumnSizer = setupRightColumnSizer(Panel),
@@ -20,7 +25,8 @@ setup_gui() ->
               [{flag,?wxLEFT bor ?wxRIGHT bor ?wxTOP},{border,25}]),
   wxSizer:add(MainSizer, RightColumnSizer),
   wxPanel:setSizer(Panel, MainSizer),
-  wxFrame:show(Frame).
+  wxFrame:show(Frame),
+  loop().
 
 setupLeftColumnSizer(Parent) ->
   StateText = wxTextCtrl:new(Parent, 1001,
@@ -73,9 +79,6 @@ setupRightColumnSizer(Parent) ->
 
   wxSizer:add(RuleInfoSizer,ForwardCheckBox),
   wxSizer:add(RuleInfoSizer,BackwardCheckBox),
-
-  % wxButton:connect(ButtonForward, command_button_clicked, []),
-  % wxButton:connect(ButtonBackward, command_button_clicked, []),
   
   wxSizer:add(RuleButtonSizer, ButtonForward),
   wxSizer:add(RuleButtonSizer, ButtonBackward),
@@ -105,3 +108,13 @@ ref_start() ->
 
 ref_stop() ->
     ets:delete(?NT_REF).
+
+loop() ->
+    receive
+        %% -------------------- Menu handlers -------------------- %%
+        #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
+            ok;
+        Other ->
+            io:format("main loop does not implement ~p~n", [Other]),
+            loop()
+    end.
