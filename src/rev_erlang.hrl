@@ -7,7 +7,9 @@
 -define(ID_BACKWARD_STEP, 41).
 
 % ets defs
+-define(FILE_PATH, 508).
 -define(NT_REF, '_._ref').
+
 
 % TODO: Add types
 -record(proc, {pid,

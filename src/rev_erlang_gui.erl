@@ -9,6 +9,8 @@ setup_gui() ->
   Server = wx:new(),
   Frame = wxFrame:new(Server, -1, ?APP_STRING,[{size,?FRAME_SIZE_INIT}]),
   ref_start(),
+  ref_add(?FILE_PATH, "."),
+  ref_add(?STATUS, #status{}),
   ref_add(?FRAME, Frame),
   setupMenu(),
   wxFrame:createStatusBar(Frame, [{id, ?STATUS_BAR}]),
@@ -29,14 +31,21 @@ setup_gui() ->
   loop().
 
 setupLeftColumnSizer(Parent) ->
-  StateText = wxTextCtrl:new(Parent, 1001,
+  StateText = wxTextCtrl:new(Parent, ?STATE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
+  ref_add(?STATE_TEXT,StateText),
+  FundefStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Funs: "),
+  FunChoice = wxChoice:new(Parent,?wxID_ANY),
+  ref_add(?FUN_CHOICE,FunChoice),
   InputStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Input args:"),
-  InputTextCtrl = wxTextCtrl:new(Parent, 1000,
-                                 [{style, ?wxBOTTOM}]),
-  StartButton = wxButton:new(Parent, ?wxID_ANY,
+  InputTextCtrl = wxTextCtrl:new(Parent, ?INPUT_TEXT,
+                                 [{style, ?wxBOTTOM},
+                                  {value, "[]"}]),
+  ref_add(?INPUT_TEXT,InputTextCtrl),
+  StartButton = wxButton:new(Parent, ?START_BUTTON,
                              [{label, "START"}, {size, {60, -1}}]),
+  ref_add(?START_BUTTON,StartButton),
   wxButton:disable(StartButton),
 
   StateSizer = wxBoxSizer:new(?wxVERTICAL),
@@ -46,6 +55,9 @@ setupLeftColumnSizer(Parent) ->
   wxSizer:addSpacer(StateSizer,10),
   wxSizer:add(StateSizer, InputSizer),
 
+  wxSizer:add(InputSizer, FundefStaticText),
+  wxSizer:add(InputSizer, FunChoice),
+  wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, InputStaticText),
   wxSizer:add(InputSizer, InputTextCtrl),
   wxSizer:addSpacer(InputSizer, 10),
@@ -163,11 +175,66 @@ ref_start() ->
 ref_stop() ->
     ets:delete(?NT_REF).
 
+loadFile(File) ->
+  Frame = ref_lookup(?FRAME),
+  case compile:file(File,[to_core,binary]) of
+    {ok,_,CoreForms} ->
+      Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
+      CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
+      %FunDefs = cerl:module_defs(CleanCoreForms),
+      StateText = ref_lookup(?STATE_TEXT),
+      wxTextCtrl:setValue(StateText,core_pp:format(CleanCoreForms)),
+      % update status
+      ref_add(?STATUS,#status{loaded = {true,CleanCoreForms}}),
+      % TODO: add fun to utils for choices
+      setChoices(["test1","test2"]),
+      StartButton = ref_lookup(?START_BUTTON),
+      wxButton:enable(StartButton),
+      % TODO: Improve this status text
+      wxFrame:setStatusText(Frame,"Loaded!");
+    Other ->
+      % TODO: Improve this status text
+      wxFrame:setStatusText(Frame,"Error when loading file")
+  end.
+
+setChoices(Choices) ->
+  FunChoice = ref_lookup(?FUN_CHOICE),
+  wxChoice:clear(FunChoice),
+  [wxChoice:append(FunChoice, Choice) || Choice <- Choices].
+
+openDialog(Parent) ->
+  Caption = "Select an Erlang file",
+  Wildcard = "Erlang source|*.erl| All files|*",
+  DefaultDir = ref_lookup(?FILE_PATH),
+  DefaultFile = "",
+  Dialog = wxFileDialog:new(Parent, [{message, Caption},
+                                     {defaultDir, DefaultDir},
+                                     {defaultFile, DefaultFile},
+                                     {wildCard, Wildcard},
+                                     {style, ?wxFD_OPEN bor
+                                          ?wxFD_FILE_MUST_EXIST}]),
+                                          % bor ?wxFD_MULTIPLE}]),
+  case wxDialog:showModal(Dialog) of
+      ?wxID_OK ->
+        File = wxFileDialog:getPaths(Dialog),
+        loadFile(File);
+      _Other -> continue
+  end,
+  wxDialog:destroy(Dialog).
+
+start() ->
+  InputTextCtrl = ref_lookup(?INPUT_TEXT),
+  InputText = wxTextCtrl:getValue(InputTextCtrl),
+  io:format("Start with Args: ~p~n",[InputText]).
+
 loop() ->
     receive
         #wx{event = #wxClose{type = close_window}} ->
           Frame = ref_lookup(?FRAME),
           wxFrame:destroy(Frame);
+        #wx{id = ?START_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
+          start(),
+          loop();
         %% -------------------- Menu handlers -------------------- %%
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
           Frame = ref_lookup(?FRAME),
