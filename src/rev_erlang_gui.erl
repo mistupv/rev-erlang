@@ -55,10 +55,10 @@ setupLeftColumnSizer(Parent) ->
 setupRightColumnSizer(Parent) ->
   PidStaticText = wxStaticText:new(Parent,?wxID_ANY,"Pid:"),
   PidTextCtrl = wxTextCtrl:new(Parent, 1001,[{style,?wxBOTTOM}]),
-  ForwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show forward rules"),
-  BackwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show backward rules"),
-  wxCheckBox:setValue(ForwardCheckBox,true),
-  wxCheckBox:setValue(BackwardCheckBox,true),
+  % ForwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show forward rules"),
+  % BackwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show backward rules"),
+  % wxCheckBox:setValue(ForwardCheckBox,true),
+  % wxCheckBox:setValue(BackwardCheckBox,true),
 
   RandButton = wxButton:new(Parent, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
   ForwRandButton = wxButton:new(Parent, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
@@ -75,16 +75,16 @@ setupRightColumnSizer(Parent) ->
 
   wxSizer:addSpacer(CtrlsSizer,25),
   wxSizer:add(CtrlsSizer, ProcInfoSizer),
-  wxSizer:addSpacer(CtrlsSizer,15),
-  wxSizer:add(CtrlsSizer, RuleInfoSizer),
+  % wxSizer:addSpacer(CtrlsSizer,15),
+  % wxSizer:add(CtrlsSizer, RuleInfoSizer),
   wxSizer:addSpacer(CtrlsSizer,15),
   wxSizer:add(CtrlsSizer, RuleButtonSizer),
 
   wxSizer:add(ProcInfoSizer,PidStaticText, [{flag,?wxCENTRE}]),
   wxSizer:add(ProcInfoSizer,PidTextCtrl, [{flag,?wxCENTRE}]),
 
-  wxSizer:add(RuleInfoSizer,ForwardCheckBox),
-  wxSizer:add(RuleInfoSizer,BackwardCheckBox),
+  % wxSizer:add(RuleInfoSizer,ForwardCheckBox),
+  % wxSizer:add(RuleInfoSizer,BackwardCheckBox),
   
   wxSizer:add(RuleButtonSizer,RandButtonSizer),
   wxSizer:add(RandButtonSizer,RandButton),
@@ -94,8 +94,6 @@ setupRightColumnSizer(Parent) ->
   addButtonsToSizer(RuleButtonSizer,ForwardButtons),
   wxSizer:addSpacer(RuleButtonSizer,15),
   addButtonsToSizer(RuleButtonSizer,BackwardButtons),
-  % wxSizer:add(RuleButtonSizer, ButtonForward),
-  % wxSizer:add(RuleButtonSizer, ButtonBackward),
   CtrlsSizer.
 
 addButtonsToSizer(Sizer,Buttons) ->
