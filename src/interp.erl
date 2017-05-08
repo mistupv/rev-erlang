@@ -1,50 +1,46 @@
 -module(interp).
--export([start/3]).
+-export([start/0]).
 
 -include("rev_erlang.hrl").
                       
-start(ModuleFile,Fun,Args) ->
-  {ok,_,CoreForms} = compile:file(ModuleFile,[to_core,binary]),
-  Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
-  CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
-  FunDefs = cerl:module_defs(CleanCoreForms),
-
+%start(ModuleFile,Fun,Args) ->
+start() ->
   rev_erlang_gui:setup_gui(),
-
-  FunDefServer = spawn(fundefserver,start,[FunDefs]),
-  case lists:member(fdserver,registered()) of
-    true -> unregister(fdserver);
-    false -> ok
-  end,
-  register(fdserver,FunDefServer),
-  FreshPidServer = spawn(freshpidserver,start,[]),
-  case lists:member(freshpidserver,registered()) of
-    true -> unregister(freshpidserver);
-    false -> ok
-  end,
-  register(freshpidserver,FreshPidServer),
-  FreshTimeServer = spawn(freshtimeserver,start,[]),
-  case lists:member(freshtimeserver,registered()) of
-    true -> unregister(freshtimeserver);
-    false -> ok
-  end,
-  register(freshtimeserver,FreshTimeServer),
-  FreshVarServer = spawn(freshvarserver,start,[]),
-  case lists:member(freshvarserver,registered()) of
-    true -> unregister(freshvarserver);
-    false -> ok
-  end,
-  register(freshvarserver,FreshVarServer),
-  Proc = #proc{pid = cerl:c_int(1),
-               exp = cerl:c_apply(Fun,Args)},
-  Procs = [Proc],
-  System = #sys{procs = Procs},
-  io:fwrite("~s~n",[utils:pp_system(System)]),
-  eval(System),
-  fdserver ! terminate,
-  freshpidserver ! terminate,
-  freshtimeserver ! terminate,
-  freshvarserver ! terminate.
+  ok.
+  % FunDefServer = spawn(fundefserver,start,[FunDefs]),
+  % case lists:member(fdserver,registered()) of
+  %   true -> unregister(fdserver);
+  %   false -> ok
+  % end,
+  % register(fdserver,FunDefServer),
+  % FreshPidServer = spawn(freshpidserver,start,[]),
+  % case lists:member(freshpidserver,registered()) of
+  %   true -> unregister(freshpidserver);
+  %   false -> ok
+  % end,
+  % register(freshpidserver,FreshPidServer),
+  % FreshTimeServer = spawn(freshtimeserver,start,[]),
+  % case lists:member(freshtimeserver,registered()) of
+  %   true -> unregister(freshtimeserver);
+  %   false -> ok
+  % end,
+  % register(freshtimeserver,FreshTimeServer),
+  % FreshVarServer = spawn(freshvarserver,start,[]),
+  % case lists:member(freshvarserver,registered()) of
+  %   true -> unregister(freshvarserver);
+  %   false -> ok
+  % end,
+  % register(freshvarserver,FreshVarServer),
+  % Proc = #proc{pid = cerl:c_int(1),
+  %              exp = cerl:c_apply(Fun,Args)},
+  % Procs = [Proc],
+  % System = #sys{procs = Procs},
+  % io:fwrite("~s~n",[utils:pp_system(System)]),
+  % eval(System),
+  % fdserver ! terminate,
+  % freshpidserver ! terminate,
+  % freshtimeserver ! terminate,
+  % freshvarserver ! terminate.
 
 eval(System) ->
   FwdOpts = fwd_sem:eval_opts(System),
