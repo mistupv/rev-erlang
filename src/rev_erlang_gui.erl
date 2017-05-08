@@ -165,10 +165,18 @@ ref_stop() ->
 
 loop() ->
     receive
+        #wx{event = #wxClose{type = close_window}} ->
+          Frame = ref_lookup(?FRAME),
+          wxFrame:destroy(Frame);
         %% -------------------- Menu handlers -------------------- %%
+        #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
+          Frame = ref_lookup(?FRAME),
+          openDialog(Frame),
+          loop();
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
-            ok;
+          Frame = ref_lookup(?FRAME),
+          wxFrame:destroy(Frame);
         Other ->
-            io:format("main loop does not implement ~p~n", [Other]),
-            loop()
+          io:format("main loop does not implement ~p~n", [Other]),
+          loop()
     end.
