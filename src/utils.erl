@@ -1,7 +1,8 @@
 -module(utils).
 -export([select_proc/2,select_msg/2,
          list_from_core/1,pp_system/1,
-         opt_to_str/1,str_to_opt/1]).
+         opt_to_str/1,str_to_opt/1,
+         moduleNames/1,stringToFunName/1]).
 
 -include("rev_erlang.hrl").
 
@@ -111,3 +112,18 @@ opt_to_str({Semantics,Type,Id}) ->
     sched -> "s" ++ integer_to_list(Id);
     proc -> "p" ++ pp(Id)
   end.
+
+moduleNames(Forms) ->
+  FunDefs = cerl:module_defs(Forms),
+  FunNames = [cerl:var_name(Var) || {Var,_Fun} <- FunDefs],
+  FunNameStrings = [funNameToString({Name,Arity}) || {Name,Arity} <- FunNames, Name =/= 'module_info'],
+  FunNameStrings.
+
+funNameToString({Name,Arity}) ->
+  atom_to_list(Name) ++ "/" ++ integer_to_list(Arity).
+
+stringToFunName(String) ->
+  FunParts = string:tokens(String, "/"),
+  Name = list_to_atom(lists:nth(1,FunParts)),
+  Arity = list_to_integer(lists:nth(2,FunParts)),
+  {Name,Arity}.

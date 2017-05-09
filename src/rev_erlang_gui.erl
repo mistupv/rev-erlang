@@ -186,8 +186,7 @@ loadFile(File) ->
       wxTextCtrl:setValue(StateText,core_pp:format(CleanCoreForms)),
       % update status
       ref_add(?STATUS,#status{loaded = {true,CleanCoreForms}}),
-      % TODO: add fun to utils for choices
-      setChoices(["test1","test2"]),
+      setChoices(utils:moduleNames(CleanCoreForms)),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
       % TODO: Improve this status text
