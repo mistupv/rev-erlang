@@ -127,7 +127,7 @@ stringToFunName(String) ->
   FunParts = string:tokens(String, "/"),
   Name = list_to_atom(lists:nth(1,FunParts)),
   Arity = list_to_integer(lists:nth(2,FunParts)),
-  {Name,Arity}.
+  cerl:c_var({Name,Arity}).
 
 stringToCoreArgs(Text) ->
   TextDot = Text ++ ".",

@@ -27,6 +27,7 @@
 -define(FORW_RAND_BUTTON,422).
 -define(BACK_RAND_BUTTON,423).
 
+-define(SYSTEM,500).
 -define(STATUS,501).
 -define(FRAME, 509).
 -define(INPUT_TEXT,502).
@@ -35,4 +36,5 @@
 -define(STATUS_BAR, 529).
 -define(START_BUTTON,400).
 -define(FUN_CHOICE,511).
+
 

@@ -183,11 +183,11 @@ loadFile(File) ->
     {ok,_,CoreForms} ->
       Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
       CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
-      %FunDefs = cerl:module_defs(CleanCoreForms),
+      FunDefs = cerl:module_defs(CleanCoreForms),
       StateText = ref_lookup(?STATE_TEXT),
       wxTextCtrl:setValue(StateText,core_pp:format(CleanCoreForms)),
       % update status
-      ref_add(?STATUS,#status{loaded = {true,CleanCoreForms}}),
+      ref_add(?STATUS,#status{loaded = {true,FunDefs}}),
       setChoices(utils:moduleNames(CleanCoreForms)),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
@@ -223,8 +223,25 @@ openDialog(Parent) ->
   end,
   wxDialog:destroy(Dialog).
 
+init_system(Fun,Args) ->
+  Proc = #proc{pid = cerl:c_int(1),
+               exp = cerl:c_apply(Fun,Args)},
+  Procs = [Proc],
+  System = #sys{procs = Procs},
+  ref_add(?SYSTEM,System).
+
 start(Fun,Args) ->
-  ok.
+  Status = ref_lookup(?STATUS),
+  #status{loaded = {true,FunDefs}} = Status,
+  rev_erlang:start_servers(FunDefs),
+  init_system(Fun,Args),
+  refresh().
+
+refresh() ->
+  System = ref_lookup(?SYSTEM),
+  StateText = ref_lookup(?STATE_TEXT),
+  io:fwrite("~s~n",[utils:pp_system(System)]),
+  wxTextCtrl:setValue(StateText,utils:pp_system(System)).
 
 start() ->
   InputTextCtrl = ref_lookup(?INPUT_TEXT),
