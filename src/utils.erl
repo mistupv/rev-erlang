@@ -2,7 +2,8 @@
 -export([select_proc/2,select_msg/2,
          list_from_core/1,pp_system/1,
          opt_to_str/1,str_to_opt/1,
-         moduleNames/1,stringToFunName/1]).
+         moduleNames/1,
+         stringToFunName/1,stringToCoreArgs/1]).
 
 -include("rev_erlang.hrl").
 
@@ -127,3 +128,11 @@ stringToFunName(String) ->
   Name = list_to_atom(lists:nth(1,FunParts)),
   Arity = list_to_integer(lists:nth(2,FunParts)),
   {Name,Arity}.
+
+stringToCoreArgs(Text) ->
+  TextDot = Text ++ ".",
+  {ok, String, _} = erl_scan:string(TextDot),
+  {ok, Exprs} = erl_parse:parse_exprs(String),
+  EvalExprs = [element(2,erl_eval:expr(Expr,[])) || Expr <- Exprs],
+  [cerl:abstract(Expr) || Expr <- EvalExprs].
+

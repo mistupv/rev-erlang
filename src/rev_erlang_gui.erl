@@ -38,10 +38,11 @@ setupLeftColumnSizer(Parent) ->
   FundefStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Funs: "),
   FunChoice = wxChoice:new(Parent,?wxID_ANY),
   ref_add(?FUN_CHOICE,FunChoice),
-  InputStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Input args:"),
+  InputStaticText1 = wxStaticText:new(Parent, ?wxID_ANY, "Input args: ["),
+  InputStaticText2 = wxStaticText:new(Parent, ?wxID_ANY, "]"),
   InputTextCtrl = wxTextCtrl:new(Parent, ?INPUT_TEXT,
                                  [{style, ?wxBOTTOM},
-                                  {value, "[]"}]),
+                                  {value, ""}]),
   ref_add(?INPUT_TEXT,InputTextCtrl),
   StartButton = wxButton:new(Parent, ?START_BUTTON,
                              [{label, "START"}, {size, {60, -1}}]),
@@ -58,8 +59,9 @@ setupLeftColumnSizer(Parent) ->
   wxSizer:add(InputSizer, FundefStaticText),
   wxSizer:add(InputSizer, FunChoice),
   wxSizer:addSpacer(InputSizer, 10),
-  wxSizer:add(InputSizer, InputStaticText),
+  wxSizer:add(InputSizer, InputStaticText1),
   wxSizer:add(InputSizer, InputTextCtrl),
+  wxSizer:add(InputSizer, InputStaticText2),
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, StartButton, [{flag,?wxALIGN_RIGHT}]),
   StateSizer.
@@ -221,10 +223,19 @@ openDialog(Parent) ->
   end,
   wxDialog:destroy(Dialog).
 
+start(Fun,Args) ->
+  ok.
+
 start() ->
   InputTextCtrl = ref_lookup(?INPUT_TEXT),
   InputText = wxTextCtrl:getValue(InputTextCtrl),
-  io:format("Start with Args: ~p~n",[InputText]).
+  FunChoice = ref_lookup(?FUN_CHOICE),
+  NumChoice = wxChoice:getSelection(FunChoice),
+  StringChoice = wxChoice:getString(FunChoice,NumChoice),
+  Fun = utils:stringToFunName(StringChoice),
+  Args = utils:stringToCoreArgs(InputText),
+  io:format("Start with Args: ~p~n",[Args]),
+  start(Fun,Args).
 
 loop() ->
     receive
