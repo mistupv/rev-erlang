@@ -36,5 +36,4 @@
 -define(STATUS_BAR, 529).
 -define(START_BUTTON,400).
 -define(FUN_CHOICE,511).
-
-
+-define(MODE_CHOICE,511).

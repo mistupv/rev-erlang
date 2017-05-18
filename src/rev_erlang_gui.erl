@@ -48,13 +48,21 @@ setupLeftColumnSizer(Parent) ->
                              [{label, "START"}, {size, {60, -1}}]),
   ref_add(?START_BUTTON,StartButton),
   wxButton:disable(StartButton),
+  ModeStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Mode: "),
+  ModeChoice = wxChoice:new(Parent,?wxID_ANY),
+  wxChoice:append(ModeChoice, "Manual"),
+  wxChoice:append(ModeChoice, "Semi-automatic"),
+  ref_add(?MODE_CHOICE,FunChoice),
 
   StateSizer = wxBoxSizer:new(?wxVERTICAL),
   InputSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ModeSizer = wxBoxSizer:new(?wxHORIZONTAL),
 
   wxSizer:add(StateSizer, StateText),
   wxSizer:addSpacer(StateSizer,10),
   wxSizer:add(StateSizer, InputSizer),
+  wxSizer:addSpacer(StateSizer,10),
+  wxSizer:add(StateSizer, ModeSizer),
 
   wxSizer:add(InputSizer, FundefStaticText),
   wxSizer:add(InputSizer, FunChoice),
@@ -64,7 +72,10 @@ setupLeftColumnSizer(Parent) ->
   wxSizer:add(InputSizer, InputStaticText2),
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, StartButton, [{flag,?wxALIGN_RIGHT}]),
+  wxSizer:add(ModeSizer, ModeStaticText),
+  wxSizer:add(ModeSizer, ModeChoice),
   StateSizer.
+
 
 setupRightColumnSizer(Parent) ->
   PidStaticText = wxStaticText:new(Parent,?wxID_ANY,"Pid:"),
