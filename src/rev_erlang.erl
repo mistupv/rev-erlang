@@ -1,5 +1,6 @@
 -module(rev_erlang).
--export([start/0,start_servers/1]).
+-export([start/0,
+         start_servers/1,stop_servers/0]).
 
 -include("rev_erlang.hrl").
                       

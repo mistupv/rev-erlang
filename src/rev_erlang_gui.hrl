@@ -7,8 +7,6 @@
 -define(EXIT, ?wxID_EXIT).
 -define(OPEN, ?wxID_OPEN).
 
-
-
 -define(FORW_SEQ_BUTTON,401).
 -define(FORW_CHECK_BUTTON,402).
 -define(FORW_SEND_BUTTON,403).

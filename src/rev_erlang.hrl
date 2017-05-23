@@ -27,3 +27,8 @@
 % TODO: Add types
 -record(sys, {msgs  = [],
               procs = []}).
+
+-record(opt, {dir, % forward or backward
+              type = proc,  % proc or msg
+              id, % integer
+              rule}). % seq, spawn, ...

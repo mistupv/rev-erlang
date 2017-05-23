@@ -16,12 +16,13 @@ setup_gui() ->
   wxFrame:createStatusBar(Frame, [{id, ?STATUS_BAR}]),
   wxEvtHandler:connect(Frame, close_window),
   wxEvtHandler:connect(Frame, command_button_clicked),
-  wxEvtHandler:connect(Frame, command_checkbox_clicked),
   wxEvtHandler:connect(Frame, command_menu_selected),
-  %wxEvtHandler:connect(Frame, command_text_updated),
+  wxEvtHandler:connect(Frame, command_text_updated),
   setupMainPanel(Frame),
   wxFrame:show(Frame),
-  loop().
+  loop(),
+  ref_stop(),
+  rev_erlang:stop_servers().
 
 setupMainPanel(Parent) ->
   MainPanel = wxPanel:new(Parent),
@@ -242,7 +243,7 @@ loadFile(File) ->
       wxButton:enable(StartButton),
       % TODO: Improve this status text
       wxFrame:setStatusText(Frame,"Loaded!");
-    Other ->
+    _Other ->
       % TODO: Improve this status text
       wxFrame:setStatusText(Frame,"Error when loading file")
   end.
@@ -299,8 +300,10 @@ refresh() ->
   StateText = ref_lookup(?STATE_TEXT),
   %io:fwrite("~s~n",[utils:pp_system(System)]),
   wxTextCtrl:setValue(StateText,utils:pp_system(System)),
-  refresh_buttons(System),
-  update_status_text("").
+  %refresh_buttons(System),
+  % not sure about this
+  %update_status_text("")
+  ok.
 
 start() ->
   InputTextCtrl = ref_lookup(?INPUT_TEXT),
@@ -320,6 +323,13 @@ loop() ->
           wxFrame:destroy(Frame);
         #wx{id = ?START_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
           start(),
+          loop();
+        #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
+          when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_RAND_BUTTON) ->
+          % eval_step_with(RuleButton)
+          io:format("Manual eval with ~p~n", [RuleButton]),
+          loop();
+        #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
           loop();
         %% -------------------- Menu handlers -------------------- %%
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
