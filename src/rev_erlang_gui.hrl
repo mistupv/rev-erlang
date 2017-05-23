@@ -39,3 +39,9 @@
 -define(FUN_CHOICE,511).
 -define(LEFT_NOTEBOOK,520).
 -define(RIGHT_NOTEBOOK,521).
+
+-define(PAGEPOS_CODE,0).
+-define(PAGEPOS_STATE,1).
+-define(PAGEPOS_MANU,0).
+-define(PAGEPOS_SEMI,1).
+-define(PAGEPOS_AUTO,2).

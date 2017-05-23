@@ -42,6 +42,7 @@ setupMainPanel(Parent) ->
 
 setupLeftSizer(Parent) ->
   Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
+  ref_add(?LEFT_NOTEBOOK, Notebook),
   CodePanel = setupCodePanel(Notebook),
   StatePanel = setupStatePanel(Notebook),
   wxNotebook:addPage(Notebook, CodePanel, "Code"),
@@ -56,6 +57,7 @@ setupCodePanel(Parent) ->
   CodeText = wxTextCtrl:new(CodePanel, ?CODE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
+  ref_add(?CODE_TEXT,CodeText),
   FundefStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Funs: "),
   FunChoice = wxChoice:new(CodePanel, ?wxID_ANY),
   ref_add(?FUN_CHOICE,FunChoice),
@@ -91,7 +93,7 @@ setupCodePanel(Parent) ->
 
  setupStatePanel(Parent) ->
   StatePanel = wxPanel:new(Parent),
-  StateText = wxTextCtrl:new(StatePanel, ?CODE_TEXT,
+  StateText = wxTextCtrl:new(StatePanel, ?STATE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
   ref_add(?STATE_TEXT,StateText),
@@ -102,6 +104,7 @@ setupCodePanel(Parent) ->
 
 setupRightSizer(Parent) ->
   Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
+  ref_add(?RIGHT_NOTEBOOK, Notebook),
   ManuPanel = setupManualPanel(Notebook),
   SemiPanel = setupSemiPanel(Notebook),
   AutoPanel = setupAutoPanel(Notebook),
@@ -116,7 +119,7 @@ setupRightSizer(Parent) ->
 setupManualPanel(Parent) ->
   ManuPanel = wxPanel:new(Parent),
   PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY,"Pid:"),
-  PidTextCtrl = wxTextCtrl:new(ManuPanel, 1001,[{style,?wxBOTTOM}]),
+  PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT,[{style,?wxBOTTOM}]),
 
   RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
   ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
@@ -230,8 +233,8 @@ loadFile(File) ->
       Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
       CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
       FunDefs = cerl:module_defs(CleanCoreForms),
-      StateText = ref_lookup(?STATE_TEXT),
-      wxTextCtrl:setValue(StateText,core_pp:format(CleanCoreForms)),
+      CodeText = ref_lookup(?CODE_TEXT),
+      wxTextCtrl:setValue(CodeText,core_pp:format(CleanCoreForms)),
       % update status
       ref_add(?STATUS,#status{loaded = {true,FunDefs}}),
       setChoices(utils:moduleNames(CleanCoreForms)),
@@ -269,25 +272,35 @@ openDialog(Parent) ->
   end,
   wxDialog:destroy(Dialog).
 
+update_status_text(String) ->
+  Frame = ref_lookup(?FRAME),
+  wxFrame:setStatusText(Frame, String).
+
 init_system(Fun,Args) ->
   Proc = #proc{pid = cerl:c_int(1),
                exp = cerl:c_apply(Fun,Args)},
   Procs = [Proc],
   System = #sys{procs = Procs},
-  ref_add(?SYSTEM,System).
+  ref_add(?SYSTEM, System).
 
 start(Fun,Args) ->
   Status = ref_lookup(?STATUS),
   #status{loaded = {true,FunDefs}} = Status,
   rev_erlang:start_servers(FunDefs),
   init_system(Fun,Args),
-  refresh().
+  refresh(),
+  LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
+  wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_STATE),
+  % TODO: Improve this status text with fun and args
+  update_status_text("Started!").
 
 refresh() ->
   System = ref_lookup(?SYSTEM),
   StateText = ref_lookup(?STATE_TEXT),
-  io:fwrite("~s~n",[utils:pp_system(System)]),
-  wxTextCtrl:setValue(StateText,utils:pp_system(System)).
+  %io:fwrite("~s~n",[utils:pp_system(System)]),
+  wxTextCtrl:setValue(StateText,utils:pp_system(System)),
+  refresh_buttons(System),
+  update_status_text("").
 
 start() ->
   InputTextCtrl = ref_lookup(?INPUT_TEXT),
