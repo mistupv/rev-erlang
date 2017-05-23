@@ -38,4 +38,4 @@
 -define(START_BUTTON,400).
 -define(FUN_CHOICE,511).
 -define(LEFT_NOTEBOOK,520).
--define(RIGHT_NOTEBOOK,520).
+-define(RIGHT_NOTEBOOK,521).

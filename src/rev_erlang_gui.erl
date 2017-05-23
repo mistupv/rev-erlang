@@ -31,24 +31,28 @@ setupMainPanel(Parent) ->
   LeftSizer = setupLeftSizer(LeftPanel),
   wxWindow:setSizerAndFit(LeftPanel, LeftSizer),
 
-  % wxSizer:add(MainSizer, LeftSizer),
+  RightPanel = wxPanel:new(MainPanel),
+  RightSizer = setupRightSizer(RightPanel),
+  wxWindow:setSizerAndFit(RightPanel, RightSizer),
 
+  wxSizer:add(MainSizer, LeftPanel),
+  wxSizer:add(MainSizer, RightPanel),
   wxWindow:setSizer(MainPanel, MainSizer),
-  MainSizer.
+  MainPanel.
 
 setupLeftSizer(Parent) ->
-  Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),%, [{style, ?wxNB_NOPAGETHEME}]),
+  Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
   CodePanel = setupCodePanel(Notebook),
   StatePanel = setupStatePanel(Notebook),
   wxNotebook:addPage(Notebook, CodePanel, "Code"),
   wxNotebook:addPage(Notebook, StatePanel, "State"),
-  wxNotebook:layout(Notebook),
+  % wxNotebook:layout(Notebook),
   LeftSizer = wxBoxSizer:new(?wxVERTICAL),
   wxSizer:add(LeftSizer, Notebook),
   LeftSizer.
 
 setupCodePanel(Parent) ->
-  CodePanel = wxPanel:new(Parent), 
+  CodePanel = wxPanel:new(Parent),   
   CodeText = wxTextCtrl:new(CodePanel, ?CODE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
@@ -86,63 +90,71 @@ setupCodePanel(Parent) ->
   CodePanel.
 
  setupStatePanel(Parent) ->
-  StatePanel = wxPanel:new(Parent), 
+  StatePanel = wxPanel:new(Parent),
   StateText = wxTextCtrl:new(StatePanel, ?CODE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
   ref_add(?STATE_TEXT,StateText),
- 
   StateSizer = wxBoxSizer:new(?wxVERTICAL),
-
   wxSizer:add(StateSizer, StateText),
-
-  
   wxWindow:setSizer(StatePanel, StateSizer),
   StatePanel.
 
-setupRightColumnSizer(Parent) ->
-  PidStaticText = wxStaticText:new(Parent,?wxID_ANY,"Pid:"),
-  PidTextCtrl = wxTextCtrl:new(Parent, 1001,[{style,?wxBOTTOM}]),
-  % ForwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show forward rules"),
-  % BackwardCheckBox = wxCheckBox:new(Parent,?wxID_ANY,"Show backward rules"),
-  % wxCheckBox:setValue(ForwardCheckBox,true),
-  % wxCheckBox:setValue(BackwardCheckBox,true),
+setupRightSizer(Parent) ->
+  Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
+  ManuPanel = setupManualPanel(Notebook),
+  SemiPanel = setupSemiPanel(Notebook),
+  AutoPanel = setupAutoPanel(Notebook),
+  wxNotebook:addPage(Notebook, ManuPanel, "Manual"),
+  wxNotebook:addPage(Notebook, SemiPanel, "Semi"),
+  wxNotebook:addPage(Notebook, AutoPanel, "Auto"),
+  %wxNotebook:layout(Notebook),
+  RightSizer = wxBoxSizer:new(?wxVERTICAL),
+  wxSizer:add(RightSizer, Notebook),
+  RightSizer.
 
-  RandButton = wxButton:new(Parent, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
-  ForwRandButton = wxButton:new(Parent, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
-  BackRandButton = wxButton:new(Parent, ?BACK_RAND_BUTTON, [{label,getButtonLabel(?BACK_RAND_BUTTON)}]),
+setupManualPanel(Parent) ->
+  ManuPanel = wxPanel:new(Parent),
+  PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY,"Pid:"),
+  PidTextCtrl = wxTextCtrl:new(ManuPanel, 1001,[{style,?wxBOTTOM}]),
 
-  ForwardButtons = setupRuleButtons(Parent, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
-  BackwardButtons = setupRuleButtons(Parent,?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
+  RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
+  ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
+  BackRandButton = wxButton:new(ManuPanel, ?BACK_RAND_BUTTON, [{label,getButtonLabel(?BACK_RAND_BUTTON)}]),
 
-  CtrlsSizer = wxBoxSizer:new(?wxVERTICAL),
-  ProcInfoSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  RuleInfoSizer = wxBoxSizer:new(?wxVERTICAL),
-  RuleButtonSizer = wxBoxSizer:new(?wxVERTICAL),
+  ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
+  BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
+
+  ManuSizer = wxBoxSizer:new(?wxVERTICAL),
+  ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ButtonSizer = wxBoxSizer:new(?wxVERTICAL),
   RandButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
 
-  wxSizer:addSpacer(CtrlsSizer,25),
-  wxSizer:add(CtrlsSizer, ProcInfoSizer),
-  % wxSizer:addSpacer(CtrlsSizer,15),
-  % wxSizer:add(CtrlsSizer, RuleInfoSizer),
-  wxSizer:addSpacer(CtrlsSizer,15),
-  wxSizer:add(CtrlsSizer, RuleButtonSizer),
+  wxSizer:add(ManuSizer, ProcSizer),
+  wxSizer:addSpacer(ManuSizer, 15),
+  wxSizer:add(ManuSizer, ButtonSizer),
 
-  wxSizer:add(ProcInfoSizer,PidStaticText, [{flag,?wxCENTRE}]),
-  wxSizer:add(ProcInfoSizer,PidTextCtrl, [{flag,?wxCENTRE}]),
-
-  % wxSizer:add(RuleInfoSizer,ForwardCheckBox),
-  % wxSizer:add(RuleInfoSizer,BackwardCheckBox),
+  wxSizer:add(ProcSizer, PidStaticText, [{flag,?wxCENTRE}]),
+  wxSizer:add(ProcSizer, PidTextCtrl, [{flag,?wxCENTRE}]),
   
-  wxSizer:add(RuleButtonSizer,RandButtonSizer),
-  wxSizer:add(RandButtonSizer,RandButton),
-  wxSizer:add(RandButtonSizer,ForwRandButton),
-  wxSizer:add(RandButtonSizer,BackRandButton),
-  wxSizer:addSpacer(RuleButtonSizer,15),
-  addButtonsToSizer(RuleButtonSizer,ForwardButtons),
-  wxSizer:addSpacer(RuleButtonSizer,15),
-  addButtonsToSizer(RuleButtonSizer,BackwardButtons),
-  CtrlsSizer.
+  wxSizer:add(ButtonSizer, RandButtonSizer),
+  wxSizer:add(RandButtonSizer, RandButton),
+  wxSizer:add(RandButtonSizer, ForwRandButton),
+  wxSizer:add(RandButtonSizer, BackRandButton),
+  wxSizer:addSpacer(ButtonSizer, 15),
+  addButtonsToSizer(ButtonSizer, ForwardButtons),
+  wxSizer:addSpacer(ButtonSizer, 15),
+  addButtonsToSizer(ButtonSizer, BackwardButtons),
+  wxWindow:setSizer(ManuPanel, ManuSizer),
+  ManuPanel.
+
+setupSemiPanel(Parent) ->
+  SemiPanel = wxPanel:new(Parent),
+  SemiPanel.
+
+setupAutoPanel(Parent) ->
+  AutoPanel = wxPanel:new(Parent),
+  AutoPanel.
 
 addButtonsToSizer(Sizer,Buttons) ->
   FirstRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
