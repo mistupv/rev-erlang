@@ -33,7 +33,9 @@
 -define(INPUT_TEXT,502).
 -define(PID_TEXT,508).
 -define(STATE_TEXT,510).
+-define(CODE_TEXT,512).
 -define(STATUS_BAR, 529).
 -define(START_BUTTON,400).
 -define(FUN_CHOICE,511).
--define(MODE_CHOICE,511).
+-define(LEFT_NOTEBOOK,520).
+-define(RIGHT_NOTEBOOK,520).

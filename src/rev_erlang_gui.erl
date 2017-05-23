@@ -19,50 +19,59 @@ setup_gui() ->
   wxEvtHandler:connect(Frame, command_checkbox_clicked),
   wxEvtHandler:connect(Frame, command_menu_selected),
   %wxEvtHandler:connect(Frame, command_text_updated),
-  Panel = wxPanel:new(Frame),
-  LeftColumnSizer = setupLeftColumnSizer(Panel),
-  RightColumnSizer = setupRightColumnSizer(Panel),
-  MainSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  wxSizer:add(MainSizer, LeftColumnSizer,
-              [{flag,?wxLEFT bor ?wxRIGHT bor ?wxTOP},{border,25}]),
-  wxSizer:add(MainSizer, RightColumnSizer),
-  wxPanel:setSizer(Panel, MainSizer),
+  setupMainPanel(Frame),
   wxFrame:show(Frame),
   loop().
 
-setupLeftColumnSizer(Parent) ->
-  StateText = wxTextCtrl:new(Parent, ?STATE_TEXT,
+setupMainPanel(Parent) ->
+  MainPanel = wxPanel:new(Parent),
+  MainSizer = wxBoxSizer:new(?wxHORIZONTAL),
+
+  LeftPanel = wxPanel:new(MainPanel),
+  LeftSizer = setupLeftSizer(LeftPanel),
+  wxWindow:setSizerAndFit(LeftPanel, LeftSizer),
+
+  % wxSizer:add(MainSizer, LeftSizer),
+
+  wxWindow:setSizer(MainPanel, MainSizer),
+  MainSizer.
+
+setupLeftSizer(Parent) ->
+  Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),%, [{style, ?wxNB_NOPAGETHEME}]),
+  CodePanel = setupCodePanel(Notebook),
+  StatePanel = setupStatePanel(Notebook),
+  wxNotebook:addPage(Notebook, CodePanel, "Code"),
+  wxNotebook:addPage(Notebook, StatePanel, "State"),
+  wxNotebook:layout(Notebook),
+  LeftSizer = wxBoxSizer:new(?wxVERTICAL),
+  wxSizer:add(LeftSizer, Notebook),
+  LeftSizer.
+
+setupCodePanel(Parent) ->
+  CodePanel = wxPanel:new(Parent), 
+  CodeText = wxTextCtrl:new(CodePanel, ?CODE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
-  ref_add(?STATE_TEXT,StateText),
-  FundefStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Funs: "),
-  FunChoice = wxChoice:new(Parent,?wxID_ANY),
+  FundefStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Funs: "),
+  FunChoice = wxChoice:new(CodePanel, ?wxID_ANY),
   ref_add(?FUN_CHOICE,FunChoice),
-  InputStaticText1 = wxStaticText:new(Parent, ?wxID_ANY, "Input args: ["),
-  InputStaticText2 = wxStaticText:new(Parent, ?wxID_ANY, "]"),
-  InputTextCtrl = wxTextCtrl:new(Parent, ?INPUT_TEXT,
+  InputStaticText1 = wxStaticText:new(CodePanel, ?wxID_ANY, "Input args: ["),
+  InputStaticText2 = wxStaticText:new(CodePanel, ?wxID_ANY, "]"),
+  InputTextCtrl = wxTextCtrl:new(CodePanel, ?INPUT_TEXT,
                                  [{style, ?wxBOTTOM},
                                   {value, ""}]),
   ref_add(?INPUT_TEXT,InputTextCtrl),
-  StartButton = wxButton:new(Parent, ?START_BUTTON,
+  StartButton = wxButton:new(CodePanel, ?START_BUTTON,
                              [{label, "START"}, {size, {60, -1}}]),
   ref_add(?START_BUTTON,StartButton),
   wxButton:disable(StartButton),
-  ModeStaticText = wxStaticText:new(Parent, ?wxID_ANY, "Mode: "),
-  ModeChoice = wxChoice:new(Parent,?wxID_ANY),
-  wxChoice:append(ModeChoice, "Manual"),
-  wxChoice:append(ModeChoice, "Semi-automatic"),
-  ref_add(?MODE_CHOICE,FunChoice),
 
-  StateSizer = wxBoxSizer:new(?wxVERTICAL),
+  CodeSizer = wxBoxSizer:new(?wxVERTICAL),
   InputSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  ModeSizer = wxBoxSizer:new(?wxHORIZONTAL),
 
-  wxSizer:add(StateSizer, StateText),
-  wxSizer:addSpacer(StateSizer,10),
-  wxSizer:add(StateSizer, InputSizer),
-  wxSizer:addSpacer(StateSizer,10),
-  wxSizer:add(StateSizer, ModeSizer),
+  wxSizer:add(CodeSizer, CodeText),
+  wxSizer:addSpacer(CodeSizer, 10),
+  wxSizer:add(CodeSizer, InputSizer),
 
   wxSizer:add(InputSizer, FundefStaticText),
   wxSizer:add(InputSizer, FunChoice),
@@ -72,10 +81,24 @@ setupLeftColumnSizer(Parent) ->
   wxSizer:add(InputSizer, InputStaticText2),
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, StartButton, [{flag,?wxALIGN_RIGHT}]),
-  wxSizer:add(ModeSizer, ModeStaticText),
-  wxSizer:add(ModeSizer, ModeChoice),
-  StateSizer.
 
+  wxWindow:setSizer(CodePanel, CodeSizer),
+  CodePanel.
+
+ setupStatePanel(Parent) ->
+  StatePanel = wxPanel:new(Parent), 
+  StateText = wxTextCtrl:new(StatePanel, ?CODE_TEXT,
+                             [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
+                              {size,{460,460}}]),
+  ref_add(?STATE_TEXT,StateText),
+ 
+  StateSizer = wxBoxSizer:new(?wxVERTICAL),
+
+  wxSizer:add(StateSizer, StateText),
+
+  
+  wxWindow:setSizer(StatePanel, StateSizer),
+  StatePanel.
 
 setupRightColumnSizer(Parent) ->
   PidStaticText = wxStaticText:new(Parent,?wxID_ANY,"Pid:"),
