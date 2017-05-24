@@ -3,7 +3,8 @@
          list_from_core/1,pp_system/1,
          opt_to_str/1,str_to_opt/1,
          moduleNames/1,
-         stringToFunName/1,stringToCoreArgs/1]).
+         stringToFunName/1,stringToCoreArgs/1,
+         filter_options/2]).
 
 -include("rev_erlang.hrl").
 
@@ -136,3 +137,10 @@ stringToCoreArgs(Text) ->
   EvalExprs = [element(2,erl_eval:expr(Expr,[])) || Expr <- Exprs],
   [cerl:abstract(Expr) || Expr <- EvalExprs].
 
+filter_options([], _) -> [];
+filter_options([CurOpt|RestOpts], Id) ->
+  #opt{id = OptId} = CurOpt,
+  case OptId == Id of
+    true -> [CurOpt|filter_options(RestOpts,Id)];
+    false -> filter_options(RestOpts,Id)
+  end.

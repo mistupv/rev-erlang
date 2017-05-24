@@ -287,7 +287,7 @@ eval_sched_opts(#sys{msgs = [CurMsg|RestMsgs], procs = Procs}) ->
       eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs});
     _Other ->
       Time = CurMsg#msg.time,
-      [{?MODULE,sched,Time}|eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs})]
+      [#opt{sem = ?MODULE, type = ?TYPE_MSG, id = Time, rule = ?RULE_SCHED}|eval_sched_opts(#sys{msgs = RestMsgs, procs = Procs})]
   end.
 
 eval_procs_opts(#sys{procs = []}) ->
@@ -298,6 +298,23 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
   case is_exp(Exp) of
     true ->
       case cerl:type(Exp) of
+      %   call ->
+      % CallArgs = cerl:call_args(Exp),
+      % CallModule = cerl:call_module(Exp),
+      % CallName = cerl:call_name(Exp),
+
+      % case CallModule of
+      %   {c_literal,_,'erlang'} -> 
+      %   case CallName of
+      %     {c_literal,_,'spawn'} ->
+      %     {c_literal,_,'self'} ->
+      %     {c_literal,_,'!'} ->
+      %     _Other ->
+      %   end;
+      %   _Other -> erlang:error(undef_call)
+      % end
+
+      % end;
         'receive' ->
           ReceiveClauses = cerl:receive_clauses(Exp),
           Mail = CurProc#proc.mail,

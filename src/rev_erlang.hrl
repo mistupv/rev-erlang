@@ -3,12 +3,24 @@
 
 -define(ID_GAMMA,0).
 
--define(ID_FORWARD_STEP,  40).
--define(ID_BACKWARD_STEP, 41).
+-define(FWD_SEM, fwd_sem).
+-define(BWD_SEM, bwd_sem).
+
+-define(TYPE_MSG, msg).
+-define(TYPE_PROC, proc).
+
+-define(RULE_SEQ, seq).
+-define(RULE_CHECK, check).
+-define(RULE_SEND, send).
+-define(RULE_RECEIVE, 'receive').
+-define(RULE_SPAWN, spawn).
+-define(RULE_SELF, self).
+-define(RULE_SCHED, sched).
 
 % ets defs
 -define(FILE_PATH, 508).
--define(NT_REF, '_._ref').
+-define(GUI_REF, '_._gui').
+
 
 
 % TODO: Add types
@@ -28,7 +40,7 @@
 -record(sys, {msgs  = [],
               procs = []}).
 
--record(opt, {dir, % forward or backward
-              type = proc,  % proc or msg
+-record(opt, {sem, % forward or backward
+              type,  % proc or msg
               id, % integer
               rule}). % seq, spawn, ...

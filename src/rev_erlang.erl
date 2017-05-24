@@ -1,6 +1,7 @@
 -module(rev_erlang).
 -export([start/0,
-         start_servers/1,stop_servers/0]).
+         start_servers/1,stop_servers/0,
+         eval_opts/1, eval_step/2]).
 
 -include("rev_erlang.hrl").
                       
@@ -41,22 +42,37 @@ stop_servers() ->
   freshtimeserver ! terminate,
   freshvarserver ! terminate.
 
-eval(System) ->
+eval_opts(System) ->  
   FwdOpts = fwd_sem:eval_opts(System),
   BwdOpts = bwd_sem:eval_opts(System),
-  AllOpts = FwdOpts ++ BwdOpts,
-  StrOpts = string:join([utils:opt_to_str(Opt) || Opt <- AllOpts]," "),
-  io:fwrite("Available rules: ~s~n",[StrOpts]),
-  StrOpt =
-    case io:fread("Select rule: ","~s") of
-      {ok,[ReadStr]} -> ReadStr;
-      _ -> error
-    end,
-  {Semantics,Type,Id} = utils:str_to_opt(StrOpt),
+  FwdOpts ++ BwdOpts.
+
+eval_step(System, Option) ->
+  #opt{sem = Semantics, type = Type, id = Id} = Option,
   NewSystem =
     case Type of
-      sched -> Semantics:eval_sched(System,Id);
-      proc -> Semantics:eval_step(System,Id)
+      ?TYPE_MSG -> Semantics:eval_sched(System,Id);
+      ?TYPE_PROC -> Semantics:eval_step(System,Id)
     end,
-  io:fwrite("~s~n",[utils:pp_system(NewSystem)]),
-  eval(NewSystem).
+  NewSystem.
+
+
+% eval(System) ->
+%   FwdOpts = fwd_sem:eval_opts(System),
+%   BwdOpts = bwd_sem:eval_opts(System),
+%   AllOpts = FwdOpts ++ BwdOpts,
+%   StrOpts = string:join([utils:opt_to_str(Opt) || Opt <- AllOpts]," "),
+%   io:fwrite("Available rules: ~s~n",[StrOpts]),
+%   StrOpt =
+%     case io:fread("Select rule: ","~s") of
+%       {ok,[ReadStr]} -> ReadStr;
+%       _ -> error
+%     end,
+%   {Semantics,Type,Id} = utils:str_to_opt(StrOpt),
+%   NewSystem =
+%     case Type of
+%       sched -> Semantics:eval_sched(System,Id);
+%       proc -> Semantics:eval_step(System,Id)
+%     end,
+%   io:fwrite("~s~n",[utils:pp_system(NewSystem)]),
+%   eval(NewSystem).
