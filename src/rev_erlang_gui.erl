@@ -119,8 +119,9 @@ setupRightSizer(Parent) ->
 
 setupManualPanel(Parent) ->
   ManuPanel = wxPanel:new(Parent),
-  PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY,"Pid:"),
-  PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT,[{style,?wxBOTTOM}]),
+  PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Pid:"),
+  PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
+  ref_add(?PID_TEXT, PidTextCtrl),
 
   RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
   ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
@@ -215,17 +216,17 @@ setupMenu() ->
   wxFrame:setMenuBar(Frame,MenuBar).
 
 ref_add(Id, Ref) ->
-    ets:insert(?NT_REF, {Id, Ref}).
+    ets:insert(?GUI_REF, {Id, Ref}).
 
 ref_lookup(Id) ->
-    ets:lookup_element(?NT_REF, Id, 2).
+    ets:lookup_element(?GUI_REF, Id, 2).
 
 ref_start() ->
-    ?NT_REF = ets:new(?NT_REF, [set, public, named_table]),
+    ?GUI_REF = ets:new(?GUI_REF, [set, public, named_table]),
     ok.
 
 ref_stop() ->
-    ets:delete(?NT_REF).
+    ets:delete(?GUI_REF).
 
 loadFile(File) ->
   Frame = ref_lookup(?FRAME),
@@ -295,8 +296,43 @@ start(Fun,Args) ->
   % TODO: Improve this status text with fun and args
   update_status_text("Started!").
 
+set_button_if(Button, EnabledButtons) ->
+  case lists:member(Button,EnabledButtons) of
+    true -> wxButton:enable(Button);
+    false -> wxButton:disable(Button)
+  end.
+
+refresh_buttons(Options) ->
+  PidTextCtrl = ref_lookup(?PID_TEXT),
+  PidText = wxTextCtrl:getValue(PidTextCtrl),
+  PidCerl = cerl:c_int(list_to_integer(PidText)),
+  FiltOpts = utils:filter_options(Options,PidCerl),
+  FiltButtons = lists:map(fun option_to_button/1, FiltOpts),
+  ManualButtons = lists:seq(?FORW_SEQ_BUTTON,?BACK_SCHED_BUTTON),
+  [set_button_if(Button,FiltButtons) || Button <- ManualButtons].
+
+option_to_button(Option) ->
+  case Option of
+    #opt{sem = ?FWD_SEM, rule = ?RULE_SEQ} ->     ?FORW_SEQ_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_CHECK} ->   ?FORW_CHECK_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_SEND} ->    ?FORW_SEND_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_RECEIVE} -> ?FORW_RECEIVE_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_SPAWN} ->   ?FORW_SPAWN_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_SELF} ->    ?FORW_SELF_BUTTON;
+    #opt{sem = ?FWD_SEM, rule = ?RULE_SCHED} ->   ?FORW_SCHED_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_SEQ} ->     ?BACK_SEQ_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_CHECK} ->   ?BACK_CHECK_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_SEND} ->    ?BACK_SEND_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_RECEIVE} -> ?BACK_RECEIVE_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_SPAWN} ->   ?BACK_SPAWN_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_SELF} ->    ?BACK_SELF_BUTTON;
+    #opt{sem = ?BWD_SEM, rule = ?RULE_SCHED} ->   ?BACK_SCHED_BUTTON
+  end.
+
 refresh() ->
   System = ref_lookup(?SYSTEM),
+  Options = rev_erlang:eval_opts(System),
+  refresh_buttons(Options),
   StateText = ref_lookup(?STATE_TEXT),
   %io:fwrite("~s~n",[utils:pp_system(System)]),
   wxTextCtrl:setValue(StateText,utils:pp_system(System)),
@@ -313,9 +349,15 @@ start() ->
   StringChoice = wxChoice:getString(FunChoice,NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
-  io:format("Start with Args: ~p~n",[Args]),
+  io:format("Start with Args: ~p~n",[InputText]),
   start(Fun,Args).
 
+% exec_with(Button) ->
+%   System = ref_lookup(?SYSTEM),
+%   Option = button_to_option(Button),
+%   NewSystem = rev_erlang:eval_step(System, Option),
+%   ref_add(?SYSTEM, NewSystem).
+  
 loop() ->
     receive
         #wx{event = #wxClose{type = close_window}} ->
@@ -326,10 +368,12 @@ loop() ->
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_RAND_BUTTON) ->
-          % eval_step_with(RuleButton)
+          %exec_with(RuleButton),
+          refresh(),
           io:format("Manual eval with ~p~n", [RuleButton]),
           loop();
         #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
+          % refresh(),
           loop();
         %% -------------------- Menu handlers -------------------- %%
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->

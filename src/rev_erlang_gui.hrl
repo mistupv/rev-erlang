@@ -29,7 +29,7 @@
 -define(STATUS,501).
 -define(FRAME, 509).
 -define(INPUT_TEXT,502).
--define(PID_TEXT,508).
+-define(PID_TEXT,507).
 -define(STATE_TEXT,510).
 -define(CODE_TEXT,512).
 -define(STATUS_BAR, 529).
