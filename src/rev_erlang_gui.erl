@@ -21,8 +21,8 @@ setup_gui() ->
   setupMainPanel(Frame),
   wxFrame:show(Frame),
   loop(),
-  ref_stop(),
-  rev_erlang:stop_servers().
+  utils_gui:stop_servers(),
+  ref_stop().
 
 setupMainPanel(Parent) ->
   MainPanel = wxPanel:new(Parent),
@@ -123,9 +123,8 @@ setupManualPanel(Parent) ->
   PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
   ref_add(?PID_TEXT, PidTextCtrl),
 
-  RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label, utils_gui:get_button_label(?RAND_BUTTON)}]),
-  ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label, utils_gui:get_button_label(?FORW_RAND_BUTTON)}]),
-  BackRandButton = wxButton:new(ManuPanel, ?BACK_RAND_BUTTON, [{label, utils_gui:get_button_label(?BACK_RAND_BUTTON)}]),
+  ForwardStaticText  = wxStaticText:new(ManuPanel, ?wxID_ANY, "Available forward rules: "),
+  BackwardStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Available backward rules: "),
 
   ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
   BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
@@ -133,7 +132,6 @@ setupManualPanel(Parent) ->
   ManuSizer = wxBoxSizer:new(?wxVERTICAL),
   ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
   ButtonSizer = wxBoxSizer:new(?wxVERTICAL),
-  RandButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
 
   wxSizer:add(ManuSizer, ProcSizer),
   wxSizer:addSpacer(ManuSizer, 15),
@@ -142,13 +140,10 @@ setupManualPanel(Parent) ->
   wxSizer:add(ProcSizer, PidStaticText, [{flag,?wxCENTRE}]),
   wxSizer:add(ProcSizer, PidTextCtrl, [{flag,?wxCENTRE}]),
   
-  wxSizer:add(ButtonSizer, RandButtonSizer),
-  wxSizer:add(RandButtonSizer, RandButton),
-  wxSizer:add(RandButtonSizer, ForwRandButton),
-  wxSizer:add(RandButtonSizer, BackRandButton),
-  wxSizer:addSpacer(ButtonSizer, 15),
+  wxSizer:add(ButtonSizer, ForwardStaticText),
   addButtonsToSizer(ButtonSizer, ForwardButtons),
   wxSizer:addSpacer(ButtonSizer, 15),
+  wxSizer:add(ButtonSizer, BackwardStaticText),
   addButtonsToSizer(ButtonSizer, BackwardButtons),
   wxWindow:setSizer(ManuPanel, ManuSizer),
   ManuPanel.
@@ -184,6 +179,7 @@ setupRuleButtons(Parent,First,Last) ->
                 [{label, utils_gui:get_button_label(Ref)}]) || Ref <- Refs],
   RuleRefPairs = lists:zip(RuleButtons,Refs),
   [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
+  utils_gui:disable_rule_buttons(Refs),
   RuleButtons.
 
 setupMenu() ->
@@ -252,6 +248,7 @@ init_system(Fun,Args) ->
 start(Fun,Args) ->
   Status = ref_lookup(?STATUS),
   #status{loaded = {true,FunDefs}} = Status,
+  utils_gui:stop_servers(),
   rev_erlang:start_servers(FunDefs),
   init_system(Fun,Args),
   refresh(),
@@ -285,8 +282,6 @@ refresh() ->
       refresh_buttons(Options),
       StateText = ref_lookup(?STATE_TEXT),
       wxTextCtrl:setValue(StateText,utils:pp_system(System))
-      % not sure about this
-      %utils_gui:update_status_text("")
   end.
 
 start() ->
@@ -307,7 +302,6 @@ exec_with(Button) ->
   PidText = wxTextCtrl:getValue(PidTextCtrl),
   case string:to_integer(PidText) of
     {error, _} ->
-      %update_status_text
       ok;
     {PidInt, _} ->
       PidCerl = cerl:c_int(PidInt),
@@ -315,6 +309,8 @@ exec_with(Button) ->
       Option = PartOption#opt{id = PidCerl},
       NewSystem = rev_erlang:eval_step(System, Option),
       ref_add(?SYSTEM, NewSystem)
+      % TODO: What should we say in the status text?
+      % update_status_text("")
   end.
   
 loop() ->
@@ -329,7 +325,6 @@ loop() ->
           when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_RAND_BUTTON) ->
           exec_with(RuleButton),
           refresh(),
-          io:format("Manual eval with ~p~n", [RuleButton]),
           loop();
         #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
           refresh(),

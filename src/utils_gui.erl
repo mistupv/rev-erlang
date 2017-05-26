@@ -2,7 +2,7 @@
 -export([is_app_loaded/0, is_app_running/0,
          get_button_label/1, option_to_button/1, button_to_option/1,
          disable_rule_buttons/1, set_button_if/2,
-         set_choices/1, update_status_text/1]).
+         set_choices/1, stop_servers/0, update_status_text/1]).
 
 -include("rev_erlang.hrl").
 -include("rev_erlang_gui.hrl").
@@ -91,6 +91,14 @@ set_choices(Choices) ->
   FunChoice = ref_lookup(?FUN_CHOICE),
   wxChoice:clear(FunChoice),
   [wxChoice:append(FunChoice, Choice) || Choice <- Choices].
+
+stop_servers() ->
+  case is_app_running() of
+    true ->
+      rev_erlang:stop_servers(),
+      ok;
+    false -> ok
+  end.
 
 update_status_text(String) ->
   Frame = ref_lookup(?FRAME),
