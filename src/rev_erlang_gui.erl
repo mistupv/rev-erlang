@@ -200,8 +200,15 @@ getButtonLabel(Button) ->
   end.
 
 setupRuleButtons(Parent,First,Last) ->
-  [wxButton:new(Parent, Button,
-                [{label,getButtonLabel(Button)}]) || Button <- lists:seq(First,Last)].
+  Refs = lists:seq(First,Last),
+  RuleButtons = [wxButton:new(Parent, Ref,
+                [{label,getButtonLabel(Ref)}]) || Ref <- Refs],
+  RuleRefPairs = lists:zip(RuleButtons,Refs),
+  [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
+  RuleButtons.
+
+disableRuleButtons(Buttons) ->
+  [wxButton:disable(ref_lookup(Button)) || Button <- Buttons].
 
 setupMenu() ->
   MenuBar = wxMenuBar:new(),
@@ -283,7 +290,10 @@ init_system(Fun,Args) ->
                exp = cerl:c_apply(Fun,Args)},
   Procs = [Proc],
   System = #sys{procs = Procs},
-  ref_add(?SYSTEM, System).
+  ref_add(?SYSTEM, System),
+  Status = ref_lookup(?STATUS),
+  NewStatus = Status#status{running = true},
+  ref_add(?STATUS, NewStatus).
 
 start(Fun,Args) ->
   Status = ref_lookup(?STATUS),
@@ -297,19 +307,25 @@ start(Fun,Args) ->
   update_status_text("Started!").
 
 set_button_if(Button, EnabledButtons) ->
-  case lists:member(Button,EnabledButtons) of
-    true -> wxButton:enable(Button);
-    false -> wxButton:disable(Button)
+  case lists:member(Button, EnabledButtons) of
+    true -> wxButton:enable(ref_lookup(Button));
+    false -> wxButton:disable(ref_lookup(Button))
   end.
 
 refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
-  PidCerl = cerl:c_int(list_to_integer(PidText)),
-  FiltOpts = utils:filter_options(Options,PidCerl),
-  FiltButtons = lists:map(fun option_to_button/1, FiltOpts),
   ManualButtons = lists:seq(?FORW_SEQ_BUTTON,?BACK_SCHED_BUTTON),
-  [set_button_if(Button,FiltButtons) || Button <- ManualButtons].
+  case string:to_integer(PidText) of
+    {error, _} ->
+      disableRuleButtons(ManualButtons);
+    {PidInt, _} ->
+      PidCerl = cerl:c_int(PidInt),
+      FiltOpts = utils:filter_options(Options,PidCerl),
+      FiltButtons = lists:map(fun option_to_button/1, FiltOpts),
+
+      [set_button_if(Button, FiltButtons) || Button <- ManualButtons]
+  end.
 
 option_to_button(Option) ->
   case Option of
@@ -330,16 +346,20 @@ option_to_button(Option) ->
   end.
 
 refresh() ->
-  System = ref_lookup(?SYSTEM),
-  Options = rev_erlang:eval_opts(System),
-  refresh_buttons(Options),
-  StateText = ref_lookup(?STATE_TEXT),
-  %io:fwrite("~s~n",[utils:pp_system(System)]),
-  wxTextCtrl:setValue(StateText,utils:pp_system(System)),
-  %refresh_buttons(System),
-  % not sure about this
-  %update_status_text("")
-  ok.
+  case is_app_running() of
+    false -> ok;
+    true ->
+      System = ref_lookup(?SYSTEM),
+      Options = rev_erlang:eval_opts(System),
+      refresh_buttons(Options),
+      StateText = ref_lookup(?STATE_TEXT),
+      %io:fwrite("~s~n",[utils:pp_system(System)]),
+      wxTextCtrl:setValue(StateText,utils:pp_system(System)),
+      %refresh_buttons(System),
+      % not sure about this
+      %update_status_text("")
+      ok
+  end.
 
 start() ->
   InputTextCtrl = ref_lookup(?INPUT_TEXT),
@@ -351,6 +371,19 @@ start() ->
   Args = utils:stringToCoreArgs(InputText),
   io:format("Start with Args: ~p~n",[InputText]),
   start(Fun,Args).
+
+is_app_loaded() ->
+  Status = ref_lookup(?STATUS),
+  #status{loaded = LoadedStatus} = Status,
+  case LoadedStatus of
+    {true, _} -> true;
+    _Other -> false
+  end.
+
+is_app_running() ->
+  Status = ref_lookup(?STATUS),
+  #status{running = RunningStatus} = Status,
+  RunningStatus.
 
 % exec_with(Button) ->
 %   System = ref_lookup(?SYSTEM),
@@ -373,7 +406,7 @@ loop() ->
           io:format("Manual eval with ~p~n", [RuleButton]),
           loop();
         #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
-          % refresh(),
+          refresh(),
           loop();
         %% -------------------- Menu handlers -------------------- %%
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
