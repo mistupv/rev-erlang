@@ -21,15 +21,16 @@
 -define(BACK_SPAWN_BUTTON, 412).
 -define(BACK_SELF_BUTTON, 413).
 -define(BACK_SCHED_BUTTON, 414).
--define(RAND_BUTTON, 421).
--define(FORW_RAND_BUTTON, 422).
--define(BACK_RAND_BUTTON, 423).
+-define(FORWARD_BUTTON, 422).
+-define(BACKWARD_BUTTON, 423).
+-define(NORMALIZE_BUTTON, 424).
 
 -define(SYSTEM,500).
 -define(STATUS,501).
 -define(FRAME, 509).
 -define(INPUT_TEXT,502).
 -define(PID_TEXT,507).
+-define(STEP_TEXT,506).
 -define(STATE_TEXT,510).
 -define(CODE_TEXT,512).
 -define(STATUS_BAR, 529).

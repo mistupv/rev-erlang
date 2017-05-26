@@ -36,10 +36,7 @@ get_button_label(Button) ->
     ?BACK_RECEIVE_BUTTON -> "Receive";
     ?BACK_SPAWN_BUTTON ->   "Spawn";
     ?BACK_SELF_BUTTON ->    "Self";
-    ?BACK_SCHED_BUTTON ->   "Sched";
-    ?RAND_BUTTON ->         "Random";
-    ?FORW_RAND_BUTTON ->    "Forward";
-    ?BACK_RAND_BUTTON ->    "Backward"
+    ?BACK_SCHED_BUTTON ->   "Sched"
   end.
 
 button_to_option(Button) ->

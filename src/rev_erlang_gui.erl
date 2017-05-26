@@ -107,12 +107,12 @@ setupRightSizer(Parent) ->
   Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
   ref_add(?RIGHT_NOTEBOOK, Notebook),
   ManuPanel = setupManualPanel(Notebook),
-  SemiPanel = setupSemiPanel(Notebook),
+  % SemiPanel = setupSemiPanel(Notebook),
   AutoPanel = setupAutoPanel(Notebook),
   wxNotebook:addPage(Notebook, ManuPanel, "Manual"),
-  wxNotebook:addPage(Notebook, SemiPanel, "Semi"),
-  wxNotebook:addPage(Notebook, AutoPanel, "Auto"),
-  %wxNotebook:layout(Notebook),
+  % wxNotebook:addPage(Notebook, SemiPanel, "Semi"),
+  wxNotebook:addPage(Notebook, AutoPanel, "Automatic"),
+  % wxNotebook:layout(Notebook),
   RightSizer = wxBoxSizer:new(?wxVERTICAL),
   wxSizer:add(RightSizer, Notebook),
   RightSizer.
@@ -148,12 +148,48 @@ setupManualPanel(Parent) ->
   wxWindow:setSizer(ManuPanel, ManuSizer),
   ManuPanel.
 
-setupSemiPanel(Parent) ->
-  SemiPanel = wxPanel:new(Parent),
-  SemiPanel.
+% setupSemiPanel(Parent) ->
+%   SemiPanel = wxPanel:new(Parent),
+%   SemiPanel.
 
 setupAutoPanel(Parent) ->
   AutoPanel = wxPanel:new(Parent),
+  StepStaticText = wxStaticText:new(AutoPanel, ?wxID_ANY, "Steps:"),
+  StepTextCtrl = wxTextCtrl:new(AutoPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
+  ref_add(?STEP_TEXT, StepTextCtrl),
+  ForwardButton = wxButton:new(AutoPanel, ?FORWARD_BUTTON,
+                               [{label, "Forward"}]),
+  ref_add(?FORWARD_BUTTON, ForwardButton),
+  BackwardButton = wxButton:new(AutoPanel, ?BACKWARD_BUTTON,
+                                [{label, "Backward"}]),
+  ref_add(?BACKWARD_BUTTON, BackwardButton),
+  HorizontalLine = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL}]),
+  NormalizeButton = wxButton:new(AutoPanel, ?NORMALIZE_BUTTON,
+                                [{label, "Normalize"}]),
+  ref_add(?NORMALIZE_BUTTON, NormalizeButton),
+
+  AutoSizer = wxBoxSizer:new(?wxVERTICAL),
+  StepSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  StepButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  SchedButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
+
+  wxSizer:add(AutoSizer, StepSizer),
+  wxSizer:addSpacer(AutoSizer, 15),
+  wxSizer:add(AutoSizer, StepButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+  wxSizer:add(AutoSizer, HorizontalLine,[{flag, ?wxTOP bor ?wxBOTTOM bor ?wxEXPAND},
+                                         {border, 10}]),
+  wxSizer:add(AutoSizer, SchedButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+
+  wxSizer:add(StepSizer, StepStaticText, [{flag,?wxCENTRE}]),
+  wxSizer:add(StepSizer, StepTextCtrl, [{flag,?wxCENTRE}]),
+
+  wxSizer:add(StepButtonSizer, ForwardButton),
+
+  wxSizer:add(StepButtonSizer, BackwardButton),
+  wxSizer:addSpacer(StepButtonSizer, 5),
+  wxSizer:add(SchedButtonSizer, NormalizeButton),
+
+  wxWindow:setSizer(AutoPanel, AutoSizer),
   AutoPanel.
 
 addButtonsToSizer(Sizer,Buttons) ->
@@ -322,7 +358,7 @@ loop() ->
           start(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
-          when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_RAND_BUTTON) ->
+          when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_SCHED_BUTTON) ->
           exec_with(RuleButton),
           refresh(),
           loop();
