@@ -284,12 +284,9 @@ refresh() ->
       Options = rev_erlang:eval_opts(System),
       refresh_buttons(Options),
       StateText = ref_lookup(?STATE_TEXT),
-      %io:fwrite("~s~n",[utils:pp_system(System)]),
-      wxTextCtrl:setValue(StateText,utils:pp_system(System)),
-      %refresh_buttons(System),
+      wxTextCtrl:setValue(StateText,utils:pp_system(System))
       % not sure about this
       %utils_gui:update_status_text("")
-      ok
   end.
 
 start() ->
@@ -303,11 +300,22 @@ start() ->
   io:format("Start with Args: ~p~n",[InputText]),
   start(Fun,Args).
 
-% exec_with(Button) ->
-%   System = ref_lookup(?SYSTEM),
-%   Option = button_to_option(Button),
-%   NewSystem = rev_erlang:eval_step(System, Option),
-%   ref_add(?SYSTEM, NewSystem).
+exec_with(Button) ->
+  io:format("Start with Args: ~p~n",[Button]),
+  System = ref_lookup(?SYSTEM),
+  PidTextCtrl = ref_lookup(?PID_TEXT),
+  PidText = wxTextCtrl:getValue(PidTextCtrl),
+  case string:to_integer(PidText) of
+    {error, _} ->
+      %update_status_text
+      ok;
+    {PidInt, _} ->
+      PidCerl = cerl:c_int(PidInt),
+      PartOption = utils_gui:button_to_option(Button),
+      Option = PartOption#opt{id = PidCerl},
+      NewSystem = rev_erlang:eval_step(System, Option),
+      ref_add(?SYSTEM, NewSystem)
+  end.
   
 loop() ->
     receive
@@ -319,7 +327,7 @@ loop() ->
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_RAND_BUTTON) ->
-          %exec_with(RuleButton),
+          exec_with(RuleButton),
           refresh(),
           io:format("Manual eval with ~p~n", [RuleButton]),
           loop();
