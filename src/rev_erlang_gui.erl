@@ -163,7 +163,8 @@ setupAutoPanel(Parent) ->
   BackwardButton = wxButton:new(AutoPanel, ?BACKWARD_BUTTON,
                                 [{label, "Backward"}]),
   ref_add(?BACKWARD_BUTTON, BackwardButton),
-  HorizontalLine = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL}]),
+  HorizontalLine = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL},
+                                                {size, {200, -1}}]),
   NormalizeButton = wxButton:new(AutoPanel, ?NORMALIZE_BUTTON,
                                 [{label, "Normalize"}]),
   ref_add(?NORMALIZE_BUTTON, NormalizeButton),
@@ -176,17 +177,17 @@ setupAutoPanel(Parent) ->
   wxSizer:add(AutoSizer, StepSizer),
   wxSizer:addSpacer(AutoSizer, 15),
   wxSizer:add(AutoSizer, StepButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  wxSizer:add(AutoSizer, HorizontalLine,[{flag, ?wxTOP bor ?wxBOTTOM bor ?wxEXPAND},
-                                         {border, 10}]),
+  wxSizer:add(AutoSizer, HorizontalLine,[{flag, ?wxALIGN_CENTER_HORIZONTAL bor ?wxTOP bor ?wxBOTTOM},
+                                         {border, 15}]),
   wxSizer:add(AutoSizer, SchedButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
   wxSizer:add(StepSizer, StepStaticText, [{flag,?wxCENTRE}]),
   wxSizer:add(StepSizer, StepTextCtrl, [{flag,?wxCENTRE}]),
 
   wxSizer:add(StepButtonSizer, ForwardButton),
-
-  wxSizer:add(StepButtonSizer, BackwardButton),
   wxSizer:addSpacer(StepButtonSizer, 5),
+  wxSizer:add(StepButtonSizer, BackwardButton),
+
   wxSizer:add(SchedButtonSizer, NormalizeButton),
 
   wxWindow:setSizer(AutoPanel, AutoSizer),
