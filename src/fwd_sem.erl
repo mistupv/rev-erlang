@@ -320,9 +320,10 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
           Mail = CurProc#proc.mail,
           case matchrec(ReceiveClauses, Mail) of
             no_match -> eval_procs_opts(#sys{procs = RestProcs});
-            _Other -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})]
+            _Other -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_RECEIVE}|eval_procs_opts(#sys{procs = RestProcs})]
           end;
-        _Other -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})]
+        % RULE_SEQ here is wrong  
+        _Other -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_SEQ}|eval_procs_opts(#sys{procs = RestProcs})]
       end;
     false -> eval_procs_opts(#sys{procs = RestProcs})
   end.

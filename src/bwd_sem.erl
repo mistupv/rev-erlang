@@ -38,8 +38,8 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
       eval_procs_opts(#sys{procs = RestProcs});
     [CurHist|_RestHist] ->
       case CurHist of
-        {tau,_,_} -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})];
-        {self,_,_} -> [{?MODULE,proc,Pid}|eval_procs_opts(#sys{procs = RestProcs})];
+        {tau,_,_} -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_SEQ}|eval_procs_opts(#sys{procs = RestProcs})];
+        {self,_,_} -> [#opt{sem = ?MODULE,type = ?TYPE_PROC, id = Pid, rule = ?RULE_SELF}|eval_procs_opts(#sys{procs = RestProcs})];
         % TODO: Study these cases
       %   {send,DestPid,_,_} ->
       %     case lists:keyfind(DestPid,#msg.dest,Msgs) of
