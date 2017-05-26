@@ -130,6 +130,8 @@ stringToFunName(String) ->
   Arity = list_to_integer(lists:nth(2,FunParts)),
   cerl:c_var({Name,Arity}).
 
+stringToCoreArgs([]) ->
+  [];
 stringToCoreArgs(Text) ->
   TextDot = Text ++ ".",
   {ok, String, _} = erl_scan:string(TextDot),
