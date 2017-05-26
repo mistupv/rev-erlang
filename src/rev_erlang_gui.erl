@@ -123,9 +123,9 @@ setupManualPanel(Parent) ->
   PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
   ref_add(?PID_TEXT, PidTextCtrl),
 
-  RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label,getButtonLabel(?RAND_BUTTON)}]),
-  ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label,getButtonLabel(?FORW_RAND_BUTTON)}]),
-  BackRandButton = wxButton:new(ManuPanel, ?BACK_RAND_BUTTON, [{label,getButtonLabel(?BACK_RAND_BUTTON)}]),
+  RandButton = wxButton:new(ManuPanel, ?RAND_BUTTON, [{label, utils_gui:get_button_label(?RAND_BUTTON)}]),
+  ForwRandButton = wxButton:new(ManuPanel, ?FORW_RAND_BUTTON, [{label, utils_gui:get_button_label(?FORW_RAND_BUTTON)}]),
+  BackRandButton = wxButton:new(ManuPanel, ?BACK_RAND_BUTTON, [{label, utils_gui:get_button_label(?BACK_RAND_BUTTON)}]),
 
   ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
   BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
@@ -178,37 +178,13 @@ addButtonsToSizer(Sizer,Buttons) ->
   wxSizer:add(Sizer,SecondRowSizer),
   wxSizer:add(Sizer,LastRowSizer).
 
-getButtonLabel(Button) ->
-  case Button of
-    ?FORW_SEQ_BUTTON -> "Seq";
-    ?FORW_CHECK_BUTTON -> "Check";
-    ?FORW_SEND_BUTTON -> "Send";
-    ?FORW_RECEIVE_BUTTON -> "Receive";
-    ?FORW_SPAWN_BUTTON -> "Spawn";
-    ?FORW_SELF_BUTTON -> "Self";
-    ?FORW_SCHED_BUTTON -> "Sched";
-    ?BACK_SEQ_BUTTON -> "Seq";
-    ?BACK_CHECK_BUTTON -> "Check";
-    ?BACK_SEND_BUTTON -> "Send";
-    ?BACK_RECEIVE_BUTTON -> "Receive";
-    ?BACK_SPAWN_BUTTON -> "Spawn";
-    ?BACK_SELF_BUTTON -> "Self";
-    ?BACK_SCHED_BUTTON -> "Sched";
-    ?RAND_BUTTON -> "Random";
-    ?FORW_RAND_BUTTON -> "Forward";
-    ?BACK_RAND_BUTTON -> "Backward"
-  end.
-
 setupRuleButtons(Parent,First,Last) ->
   Refs = lists:seq(First,Last),
   RuleButtons = [wxButton:new(Parent, Ref,
-                [{label,getButtonLabel(Ref)}]) || Ref <- Refs],
+                [{label, utils_gui:get_button_label(Ref)}]) || Ref <- Refs],
   RuleRefPairs = lists:zip(RuleButtons,Refs),
   [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
   RuleButtons.
-
-disableRuleButtons(Buttons) ->
-  [wxButton:disable(ref_lookup(Button)) || Button <- Buttons].
 
 setupMenu() ->
   MenuBar = wxMenuBar:new(),
@@ -222,19 +198,6 @@ setupMenu() ->
   Frame = ref_lookup(?FRAME),
   wxFrame:setMenuBar(Frame,MenuBar).
 
-ref_add(Id, Ref) ->
-    ets:insert(?GUI_REF, {Id, Ref}).
-
-ref_lookup(Id) ->
-    ets:lookup_element(?GUI_REF, Id, 2).
-
-ref_start() ->
-    ?GUI_REF = ets:new(?GUI_REF, [set, public, named_table]),
-    ok.
-
-ref_stop() ->
-    ets:delete(?GUI_REF).
-
 loadFile(File) ->
   Frame = ref_lookup(?FRAME),
   case compile:file(File,[to_core,binary]) of
@@ -246,7 +209,7 @@ loadFile(File) ->
       wxTextCtrl:setValue(CodeText,core_pp:format(CleanCoreForms)),
       % update status
       ref_add(?STATUS,#status{loaded = {true,FunDefs}}),
-      setChoices(utils:moduleNames(CleanCoreForms)),
+      utils_gui:set_choices(utils:moduleNames(CleanCoreForms)),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
       % TODO: Improve this status text
@@ -255,11 +218,6 @@ loadFile(File) ->
       % TODO: Improve this status text
       wxFrame:setStatusText(Frame,"Error when loading file")
   end.
-
-setChoices(Choices) ->
-  FunChoice = ref_lookup(?FUN_CHOICE),
-  wxChoice:clear(FunChoice),
-  [wxChoice:append(FunChoice, Choice) || Choice <- Choices].
 
 openDialog(Parent) ->
   Caption = "Select an Erlang file",
@@ -281,10 +239,6 @@ openDialog(Parent) ->
   end,
   wxDialog:destroy(Dialog).
 
-update_status_text(String) ->
-  Frame = ref_lookup(?FRAME),
-  wxFrame:setStatusText(Frame, String).
-
 init_system(Fun,Args) ->
   Proc = #proc{pid = cerl:c_int(1),
                exp = cerl:c_apply(Fun,Args)},
@@ -304,13 +258,7 @@ start(Fun,Args) ->
   LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
   wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_STATE),
   % TODO: Improve this status text with fun and args
-  update_status_text("Started!").
-
-set_button_if(Button, EnabledButtons) ->
-  case lists:member(Button, EnabledButtons) of
-    true -> wxButton:enable(ref_lookup(Button));
-    false -> wxButton:disable(ref_lookup(Button))
-  end.
+  utils_gui:update_status_text("Started!").
 
 refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
@@ -318,35 +266,18 @@ refresh_buttons(Options) ->
   ManualButtons = lists:seq(?FORW_SEQ_BUTTON,?BACK_SCHED_BUTTON),
   case string:to_integer(PidText) of
     {error, _} ->
-      disableRuleButtons(ManualButtons);
+      utils_gui:disable_rule_buttons(ManualButtons);
     {PidInt, _} ->
       PidCerl = cerl:c_int(PidInt),
       FiltOpts = utils:filter_options(Options,PidCerl),
-      FiltButtons = lists:map(fun option_to_button/1, FiltOpts),
+      FiltButtons = lists:map(fun utils_gui:option_to_button/1, FiltOpts),
 
-      [set_button_if(Button, FiltButtons) || Button <- ManualButtons]
-  end.
-
-option_to_button(Option) ->
-  case Option of
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SEQ} ->     ?FORW_SEQ_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_CHECK} ->   ?FORW_CHECK_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SEND} ->    ?FORW_SEND_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_RECEIVE} -> ?FORW_RECEIVE_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SPAWN} ->   ?FORW_SPAWN_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SELF} ->    ?FORW_SELF_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SCHED} ->   ?FORW_SCHED_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SEQ} ->     ?BACK_SEQ_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_CHECK} ->   ?BACK_CHECK_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SEND} ->    ?BACK_SEND_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_RECEIVE} -> ?BACK_RECEIVE_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SPAWN} ->   ?BACK_SPAWN_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SELF} ->    ?BACK_SELF_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SCHED} ->   ?BACK_SCHED_BUTTON
+      [utils_gui:set_button_if(Button, FiltButtons) ||
+                               Button <- ManualButtons]
   end.
 
 refresh() ->
-  case is_app_running() of
+  case utils_gui:is_app_running() of
     false -> ok;
     true ->
       System = ref_lookup(?SYSTEM),
@@ -357,7 +288,7 @@ refresh() ->
       wxTextCtrl:setValue(StateText,utils:pp_system(System)),
       %refresh_buttons(System),
       % not sure about this
-      %update_status_text("")
+      %utils_gui:update_status_text("")
       ok
   end.
 
@@ -371,19 +302,6 @@ start() ->
   Args = utils:stringToCoreArgs(InputText),
   io:format("Start with Args: ~p~n",[InputText]),
   start(Fun,Args).
-
-is_app_loaded() ->
-  Status = ref_lookup(?STATUS),
-  #status{loaded = LoadedStatus} = Status,
-  case LoadedStatus of
-    {true, _} -> true;
-    _Other -> false
-  end.
-
-is_app_running() ->
-  Status = ref_lookup(?STATUS),
-  #status{running = RunningStatus} = Status,
-  RunningStatus.
 
 % exec_with(Button) ->
 %   System = ref_lookup(?SYSTEM),
@@ -420,3 +338,16 @@ loop() ->
           io:format("main loop does not implement ~p~n", [Other]),
           loop()
     end.
+
+ref_add(Id, Ref) ->
+    ets:insert(?GUI_REF, {Id, Ref}).
+
+ref_lookup(Id) ->
+    ets:lookup_element(?GUI_REF, Id, 2).
+
+ref_start() ->
+    ?GUI_REF = ets:new(?GUI_REF, [set, public, named_table]),
+    ok.
+
+ref_stop() ->
+    ets:delete(?GUI_REF).
