@@ -1,6 +1,6 @@
 -module(utils_gui).
 -export([is_app_loaded/0, is_app_running/0,
-         get_button_label/1, option_to_button/1,
+         get_button_label/1, option_to_button/1, button_to_option/1,
          disable_rule_buttons/1, set_button_if/2,
          set_choices/1, update_status_text/1]).
 
@@ -40,6 +40,24 @@ get_button_label(Button) ->
     ?RAND_BUTTON ->         "Random";
     ?FORW_RAND_BUTTON ->    "Forward";
     ?BACK_RAND_BUTTON ->    "Backward"
+  end.
+
+button_to_option(Button) ->
+  case Button of
+    ?FORW_SEQ_BUTTON     -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEQ};
+    ?FORW_CHECK_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_CHECK};
+    ?FORW_SEND_BUTTON    -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEND};
+    ?FORW_RECEIVE_BUTTON -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_RECEIVE};
+    ?FORW_SPAWN_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SPAWN};
+    ?FORW_SELF_BUTTON    -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SELF};
+    ?FORW_SCHED_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_MSG,  rule = ?RULE_SCHED};
+    ?BACK_SEQ_BUTTON     -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEQ};
+    ?BACK_CHECK_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_CHECK};
+    ?BACK_SEND_BUTTON    -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEND};
+    ?BACK_RECEIVE_BUTTON -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_RECEIVE};
+    ?BACK_SPAWN_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SPAWN};
+    ?BACK_SELF_BUTTON    -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SELF};
+    ?BACK_SCHED_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_MSG,  rule = ?RULE_SCHED}
   end.
 
 option_to_button(Option) ->
