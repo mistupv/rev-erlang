@@ -56,7 +56,6 @@ eval_step(System, Option) ->
     end,
   NewSystem.
 
-
 % eval(System) ->
 %   FwdOpts = fwd_sem:eval_opts(System),
 %   BwdOpts = bwd_sem:eval_opts(System),

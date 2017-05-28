@@ -297,7 +297,7 @@ start(Fun,Args) ->
 refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
-  ManualButtons = lists:seq(?FORW_SEQ_BUTTON,?BACK_SCHED_BUTTON),
+  ManualButtons = lists:seq(?FORW_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
   case string:to_integer(PidText) of
     {error, _} ->
       utils_gui:disable_rule_buttons(ManualButtons);
@@ -308,7 +308,11 @@ refresh_buttons(Options) ->
 
       [utils_gui:set_button_if(Button, FiltButtons) ||
                                Button <- ManualButtons]
-  end.
+  end,
+  HasFwdOptions = utils:has_fwd(Options),
+  HasBwdOptions = utils:has_bwd(Options),
+  utils_gui:set_fwd_button_if(HasFwdOptions),
+  utils_gui:set_bwd_button_if(HasBwdOptions).
 
 refresh() ->
   case utils_gui:is_app_running() of
@@ -333,7 +337,6 @@ start() ->
   start(Fun,Args).
 
 exec_with(Button) ->
-  io:format("Start with Args: ~p~n",[Button]),
   System = ref_lookup(?SYSTEM),
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
@@ -349,7 +352,22 @@ exec_with(Button) ->
       % TODO: What should we say in the status text?
       % update_status_text("")
   end.
-  
+
+exec_mult(Button) ->
+  System = ref_lookup(?SYSTEM),
+  StepTextCtrl = ref_lookup(?STEP_TEXT),
+  StepText = wxTextCtrl:getValue(StepTextCtrl),
+  case string:to_integer(StepText) of
+    {error, _} ->
+      ok;
+    {Steps, _} ->
+      Option = utils_gui:button_to_option(Button)
+      % {NewSystem, Steps = rev_erlang:eval_multi(System, Option),
+      % ref_add(?SYSTEM, NewSystem)
+      % TODO: What should we say in the status text?
+      % update_status_text("")
+  end.
+
 loop() ->
     receive
         #wx{event = #wxClose{type = close_window}} ->
@@ -363,7 +381,20 @@ loop() ->
           exec_with(RuleButton),
           refresh(),
           loop();
+        #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
+          when (RuleButton == ?FORWARD_BUTTON) or (RuleButton == ?BACKWARD_BUTTON) ->
+          %exec_mult(RuleButton),
+          refresh(),
+          loop();
+        #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
+          when RuleButton == ?NORMALIZE_BUTTON ->
+          %exec_norm(RuleButton),
+          refresh(),
+          loop();
         #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
+          refresh(),
+          loop();
+        #wx{id = ?STEP_TEXT, event = #wxCommand{type = command_text_updated}} ->
           refresh(),
           loop();
         %% -------------------- Menu handlers -------------------- %%

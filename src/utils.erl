@@ -4,7 +4,7 @@
          opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1,
-         filter_options/2]).
+         filter_options/2,has_fwd/1,has_bwd/1]).
 
 -include("rev_erlang.hrl").
 
@@ -146,3 +146,12 @@ filter_options([CurOpt|RestOpts], Id) ->
     true -> [CurOpt|filter_options(RestOpts,Id)];
     false -> filter_options(RestOpts,Id)
   end.
+
+has_fwd([]) -> false;
+has_fwd([#opt{sem = ?FWD_SEM}|_RestOpts]) -> true;
+has_fwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
+
+
+has_bwd([]) -> false;
+has_bwd([#opt{sem = ?BWD_SEM}|_RestOpts]) -> true;
+has_bwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
