@@ -345,6 +345,7 @@ start() ->
   StringChoice = wxChoice:getString(FunChoice,NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
+-ifdef (debug).
   io:format("Start with Args: ~p~n",[InputText]),
   start(Fun,Args).
 
@@ -387,11 +388,14 @@ eval_mult(Button) ->
 
 loop() ->
     receive
-        #wx{event = #wxClose{type = close_window}} ->
-          Frame = ref_lookup(?FRAME),
-          wxFrame:destroy(Frame);
+        %% ------------------- Button handlers ------------------- %%
         #wx{id = ?START_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
           start(),
+          loop();
+        #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}}
+          when RuleButton ==  ->
+          %eval_norm(RuleButton),
+          refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_SCHED_BUTTON) ->
@@ -403,16 +407,14 @@ loop() ->
           eval_mult(RuleButton),
           refresh(),
           loop();
-        #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
-          when RuleButton == ?NORMALIZE_BUTTON ->
-          %exec_norm(RuleButton),
-          refresh(),
-          loop();
+        %% -------------------- Text handlers -------------------- %%
         #wx{id = ?PID_TEXT, event = #wxCommand{type = command_text_updated}} ->
           refresh(),
           loop();
         #wx{id = ?STEP_TEXT, event = #wxCommand{type = command_text_updated}} ->
           refresh(),
+          loop();
+        #wx{id = _RestIds, event = #wxCommand{type = command_text_updated}} ->
           loop();
         %% -------------------- Menu handlers -------------------- %%
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
@@ -422,6 +424,11 @@ loop() ->
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
           Frame = ref_lookup(?FRAME),
           wxFrame:destroy(Frame);
+        %% ------------------- Other handlers -------------------- %%
+        #wx{event = #wxClose{type = close_window}} ->
+          Frame = ref_lookup(?FRAME),
+          wxFrame:destroy(Frame);
+        %% ---------------- Non-supported events ----------------- %%
         Other ->
           io:format("main loop does not implement ~p~n", [Other]),
           loop()
