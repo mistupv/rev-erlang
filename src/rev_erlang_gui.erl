@@ -384,6 +384,10 @@ eval_mult(Button) ->
       % DoneSteps/Steps
   end.
 
+eval_norm() ->
+  System = ref_lookup(?SYSTEM),
+  NewSystem = rev_erlang:eval_norm(System),
+  ref_add(?SYSTEM, NewSystem).
 
 loop() ->
     receive
@@ -392,7 +396,7 @@ loop() ->
           start(),
           loop();
         #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
-          %eval_norm(RuleButton),
+          eval_norm(),
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
