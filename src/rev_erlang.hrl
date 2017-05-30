@@ -1,7 +1,13 @@
 
 -define(APP_STRING, "Reversible Erlang").
 
--define(ID_GAMMA,0).
+-define(ID_GAMMA, 0).
+
+-ifdef(debug).
+-define(LOG(X), io:format("{~p,~p}: ~p~n", [?MODULE, ?LINE, X])).
+-else.
+-define(LOG(X), true).
+-endif.
 
 -define(FWD_SEM, fwd_sem).
 -define(BWD_SEM, bwd_sem).

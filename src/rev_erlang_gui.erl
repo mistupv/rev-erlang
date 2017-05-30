@@ -345,8 +345,7 @@ start() ->
   StringChoice = wxChoice:getString(FunChoice,NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
--ifdef (debug).
-  io:format("Start with Args: ~p~n",[InputText]),
+  ?LOG("start fun " ++ StringChoice ++" with args " ++ InputText),
   start(Fun,Args).
 
 exec_with(Button) ->
@@ -392,8 +391,7 @@ loop() ->
         #wx{id = ?START_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
           start(),
           loop();
-        #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}}
-          when RuleButton ==  ->
+        #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
           %eval_norm(RuleButton),
           refresh(),
           loop();
