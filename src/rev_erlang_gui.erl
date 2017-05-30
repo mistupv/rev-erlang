@@ -42,7 +42,7 @@ setupMainPanel(Parent) ->
   MainPanel.
 
 setupLeftSizer(Parent) ->
-  Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
+  Notebook = wxNotebook:new(Parent, ?LEFT_NOTEBOOK),
   ref_add(?LEFT_NOTEBOOK, Notebook),
   CodePanel = setupCodePanel(Notebook),
   StatePanel = setupStatePanel(Notebook),
@@ -75,6 +75,7 @@ setupCodePanel(Parent) ->
 
   CodeSizer = wxBoxSizer:new(?wxVERTICAL),
   InputSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
   wxSizer:add(CodeSizer, CodeText),
   wxSizer:addSpacer(CodeSizer, 10),
@@ -89,7 +90,8 @@ setupCodePanel(Parent) ->
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, StartButton, [{flag,?wxALIGN_RIGHT}]),
 
-  wxWindow:setSizer(CodePanel, CodeSizer),
+  wxSizer:add(BorderSizer, CodeSizer, [{flag, ?wxALL}, {border, 10}]),
+  wxWindow:setSizer(CodePanel, BorderSizer),
   CodePanel.
 
  setupStatePanel(Parent) ->
@@ -97,14 +99,17 @@ setupCodePanel(Parent) ->
   StateText = wxTextCtrl:new(StatePanel, ?STATE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
                               {size,{460,460}}]),
-  ref_add(?STATE_TEXT,StateText),
+  ref_add(?STATE_TEXT, StateText),
   StateSizer = wxBoxSizer:new(?wxVERTICAL),
+  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
+
   wxSizer:add(StateSizer, StateText),
-  wxWindow:setSizer(StatePanel, StateSizer),
+  wxSizer:add(BorderSizer, StateSizer, [{flag, ?wxALL}, {border, 10}]),
+  wxWindow:setSizer(StatePanel, BorderSizer),
   StatePanel.
 
 setupRightSizer(Parent) ->
-  Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),%,[{style, ?wxNB_NOPAGETHEME}]),
+  Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),
   ref_add(?RIGHT_NOTEBOOK, Notebook),
   ManuPanel = setupManualPanel(Notebook),
   % SemiPanel = setupSemiPanel(Notebook),
@@ -132,6 +137,7 @@ setupManualPanel(Parent) ->
   ManuSizer = wxBoxSizer:new(?wxVERTICAL),
   ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
   ButtonSizer = wxBoxSizer:new(?wxVERTICAL),
+  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
   wxSizer:add(ManuSizer, ProcSizer),
   wxSizer:addSpacer(ManuSizer, 15),
@@ -145,7 +151,9 @@ setupManualPanel(Parent) ->
   wxSizer:addSpacer(ButtonSizer, 15),
   wxSizer:add(ButtonSizer, BackwardStaticText),
   addButtonsToSizer(ButtonSizer, BackwardButtons),
-  wxWindow:setSizer(ManuPanel, ManuSizer),
+
+  wxSizer:add(BorderSizer, ManuSizer, [{flag, ?wxALL}, {border, 10}]),
+  wxWindow:setSizer(ManuPanel, BorderSizer),
   ManuPanel.
 
 % setupSemiPanel(Parent) ->
@@ -176,16 +184,17 @@ setupAutoPanel(Parent) ->
   StepSizer = wxBoxSizer:new(?wxHORIZONTAL),
   StepButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
   SchedButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
-  wxSizer:add(AutoSizer, StepSizer),
+  wxSizer:add(AutoSizer, StepSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
   wxSizer:addSpacer(AutoSizer, 15),
   wxSizer:add(AutoSizer, StepButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  wxSizer:add(AutoSizer, HorizontalLine,[{flag, ?wxALIGN_CENTER_HORIZONTAL bor ?wxTOP bor ?wxBOTTOM},
-                                         {border, 15}]),
+  wxSizer:add(AutoSizer, HorizontalLine, [{flag, ?wxTOP bor ?wxBOTTOM},
+                                          {border, 15}]),
   wxSizer:add(AutoSizer, SchedButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
-  wxSizer:add(StepSizer, StepStaticText, [{flag,?wxCENTRE}]),
-  wxSizer:add(StepSizer, StepTextCtrl, [{flag,?wxCENTRE}]),
+  wxSizer:add(StepSizer, StepStaticText),
+  wxSizer:add(StepSizer, StepTextCtrl),
 
   wxSizer:add(StepButtonSizer, ForwardButton),
   wxSizer:addSpacer(StepButtonSizer, 5),
@@ -193,7 +202,8 @@ setupAutoPanel(Parent) ->
 
   wxSizer:add(SchedButtonSizer, NormalizeButton),
 
-  wxWindow:setSizer(AutoPanel, AutoSizer),
+  wxSizer:add(BorderSizer, AutoSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),
+  wxWindow:setSizer(AutoPanel, BorderSizer),
   AutoPanel.
 
 addButtonsToSizer(Sizer,Buttons) ->
@@ -266,7 +276,6 @@ openDialog(Parent) ->
                                      {wildCard, Wildcard},
                                      {style, ?wxFD_OPEN bor
                                           ?wxFD_FILE_MUST_EXIST}]),
-                                          % bor ?wxFD_MULTIPLE}]),
   case wxDialog:showModal(Dialog) of
       ?wxID_OK ->
         File = wxFileDialog:getPaths(Dialog),
@@ -374,6 +383,7 @@ eval_mult(Button) ->
       % TODO: What should we say in the status text?
       % DoneSteps/Steps
   end.
+
 
 loop() ->
     receive
