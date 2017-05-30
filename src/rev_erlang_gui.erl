@@ -356,7 +356,7 @@ exec_with(Button) ->
       % update_status_text("")
   end.
 
-exec_mult(Button) ->
+eval_mult(Button) ->
   System = ref_lookup(?SYSTEM),
   StepTextCtrl = ref_lookup(?STEP_TEXT),
   StepText = wxTextCtrl:getValue(StepTextCtrl),
@@ -364,11 +364,15 @@ exec_mult(Button) ->
     {error, _} ->
       ok;
     {Steps, _} ->
-      Option = utils_gui:button_to_option(Button)
-      % {NewSystem, Steps = rev_erlang:eval_multi(System, Option),
-      % ref_add(?SYSTEM, NewSystem)
+      Option =
+        case Button of
+          ?FORWARD_BUTTON -> ?MULT_FWD;
+          ?BACKWARD_BUTTON -> ?MULT_BWD
+        end,
+      {NewSystem, _StepsDone} = rev_erlang:eval_mult(System, Option, Steps),
+      ref_add(?SYSTEM, NewSystem)
       % TODO: What should we say in the status text?
-      % update_status_text("")
+      % DoneSteps/Steps
   end.
 
 loop() ->
@@ -386,7 +390,7 @@ loop() ->
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton == ?FORWARD_BUTTON) or (RuleButton == ?BACKWARD_BUTTON) ->
-          %exec_mult(RuleButton),
+          eval_mult(RuleButton),
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}

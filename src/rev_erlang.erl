@@ -1,7 +1,7 @@
 -module(rev_erlang).
 -export([start/0,
          start_servers/1,stop_servers/0,
-         eval_opts/1, eval_step/2]).
+         eval_opts/1, eval_step/2, eval_mult/3]).
 
 -include("rev_erlang.hrl").
                       
@@ -55,6 +55,28 @@ eval_step(System, Option) ->
       ?TYPE_PROC -> Semantics:eval_step(System,Id)
     end,
   NewSystem.
+
+eval_mult(System, Option, Steps) ->
+  eval_mult_1(System, Option, Steps, 0).
+
+eval_mult_1(System, _Option, Steps, Steps) ->
+  {System, Steps};
+eval_mult_1(System, Option, Steps, StepsDone) ->
+  Sem = 
+    case Option of
+      ?MULT_FWD -> fwd_sem;
+      ?MULT_BWD -> bwd_sem
+    end,  
+  Opts = Sem:eval_opts(System),
+  case Opts of
+    [] ->
+      {System, StepsDone};
+    _Other ->
+      RandIdx = random:uniform(length(Opts)),
+      RandOpt = lists:nth(RandIdx, Opts),
+      NewSystem = eval_step(System, RandOpt),
+      eval_mult_1(NewSystem, Option, Steps, StepsDone + 1)
+  end.
 
 % eval(System) ->
 %   FwdOpts = fwd_sem:eval_opts(System),

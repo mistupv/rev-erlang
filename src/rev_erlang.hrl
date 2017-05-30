@@ -21,7 +21,8 @@
 -define(FILE_PATH, 508).
 -define(GUI_REF, '_._gui').
 
-
+-define(MULT_FWD, mult_fwd).
+-define(MULT_BWD, mult_bwd).
 
 % TODO: Add types
 -record(proc, {pid,

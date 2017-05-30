@@ -154,4 +154,4 @@ has_fwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
 
 has_bwd([]) -> false;
 has_bwd([#opt{sem = ?BWD_SEM}|_RestOpts]) -> true;
-has_bwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
+has_bwd([_CurOpt|RestOpts]) -> has_bwd(RestOpts).
