@@ -295,36 +295,104 @@ eval_procs_opts(#sys{procs = []}) ->
 eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
   Exp = CurProc#proc.exp,
   Pid = CurProc#proc.pid,
-  case is_exp(Exp) of
-    true ->
-      case cerl:type(Exp) of
-      %   call ->
-      % CallArgs = cerl:call_args(Exp),
-      % CallModule = cerl:call_module(Exp),
-      % CallName = cerl:call_name(Exp),
-
-      % case CallModule of
-      %   {c_literal,_,'erlang'} -> 
-      %   case CallName of
-      %     {c_literal,_,'spawn'} ->
-      %     {c_literal,_,'self'} ->
-      %     {c_literal,_,'!'} ->
-      %     _Other ->
-      %   end;
-      %   _Other -> erlang:error(undef_call)
-      % end
-
-      % end;
-        'receive' ->
-          ReceiveClauses = cerl:receive_clauses(Exp),
-          Mail = CurProc#proc.mail,
-          case matchrec(ReceiveClauses, Mail) of
-            no_match -> eval_procs_opts(#sys{procs = RestProcs});
-            _Other -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_RECEIVE}|eval_procs_opts(#sys{procs = RestProcs})]
-          end;
-        % RULE_SEQ here is wrong  
-        _Other -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_SEQ}|eval_procs_opts(#sys{procs = RestProcs})]
-      end;
-    false -> eval_procs_opts(#sys{procs = RestProcs})
+  Mail = CurProc#proc.mail,
+  case eval_exp_opt(Exp, Mail) of
+    ?NOT_EXP ->
+      eval_procs_opts(#sys{procs = RestProcs});
+    Opt ->
+      [Opt#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid}|eval_procs_opts(#sys{procs = RestProcs})]
   end.
 
+eval_exp_opt(Exp, Mail) ->
+  case is_exp(Exp) of
+    false ->
+      ?NOT_EXP;
+    true ->
+      case cerl:type(Exp) of
+        var ->
+          #opt{rule = ?RULE_SEQ};
+        cons ->
+          ConsHdExp = cerl:cons_hd(Exp),
+          ConsTlExp = cerl:cons_tl(Exp),
+          case is_exp(ConsHdExp) of
+            true ->
+              eval_exp_opt(ConsHdExp, Mail);
+            false ->
+              case is_exp(ConsTlExp) of
+                true ->
+                  eval_exp_opt(ConsTlExp, Mail);
+                false ->
+                  ?NOT_EXP
+              end
+          end;
+        tuple ->
+            eval_exp_list_opt(cerl:tuple_es(Exp), Mail);
+        apply ->
+          ApplyArgs = cerl:apply_args(Exp),
+          case is_exp(ApplyArgs) of
+            true ->
+              eval_exp_list_opt(ApplyArgs, Mail);
+            false ->
+              #opt{rule = ?RULE_SEQ}
+          end;
+        'let' ->
+          LetArg = cerl:let_arg(Exp),
+          case is_exp(LetArg) of
+            true ->
+              eval_exp_opt(LetArg, Mail);
+            false ->
+              #opt{rule = ?RULE_SEQ}
+          end;
+        seq ->
+          SeqArg = cerl:seq_arg(Exp),
+          case is_exp(SeqArg) of
+            true ->
+              eval_exp_opt(SeqArg, Mail);
+            false ->
+              #opt{rule = ?RULE_SEQ}
+          end;
+        'case' ->
+          CaseArg = cerl:case_arg(Exp),
+          case is_exp(CaseArg) of
+            true ->
+              eval_exp_opt(CaseArg, Mail);
+            false ->
+              #opt{rule = ?RULE_SEQ}
+          end;
+        call ->
+          CallArgs = cerl:call_args(Exp),
+          CallModule = cerl:call_module(Exp),
+          CallName = cerl:call_name(Exp),
+          case is_exp(CallArgs) of
+            true ->
+              eval_exp_list_opt(CallArgs, Mail);
+            false ->
+              case CallModule of
+                {c_literal,_,'erlang'} ->
+                  case CallName of
+                    {c_literal,_,'spawn'} -> #opt{rule = ?RULE_SPAWN};
+                    {c_literal,_,'self'} -> #opt{rule = ?RULE_SELF};
+                    {c_literal,_,'!'} -> #opt{rule = ?RULE_SEND};
+                    _Other -> #opt{rule = ?RULE_SEQ}
+                  end;
+                _Other -> #opt{rule = ?RULE_SEQ}
+              end
+          end;
+        'receive' ->
+          ReceiveClauses = cerl:receive_clauses(Exp),
+          case matchrec(ReceiveClauses, Mail) of
+            no_match ->
+              ?NOT_EXP;
+            _Other ->
+              #opt{rule = ?RULE_RECEIVE}
+          end
+      end
+  end.
+
+eval_exp_list_opt([], _) ->
+  ?NOT_EXP;
+eval_exp_list_opt([CurExp|RestExp], Mail) ->
+  case is_exp(CurExp) of
+    true -> eval_exp_opt(CurExp, Mail);
+    false -> eval_exp_list_opt(RestExp, Mail)
+  end.

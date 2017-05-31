@@ -30,6 +30,8 @@
 -define(MULT_FWD, mult_fwd).
 -define(MULT_BWD, mult_bwd).
 
+-define(NOT_EXP, not_exp).
+
 % TODO: Add types
 -record(proc, {pid,
                hist = [],
