@@ -37,10 +37,9 @@ eval_seq(Env,Exp) ->
 eval_seq_1(Env,Exp) ->
   case cerl:type(Exp) of
     var ->
-      [Value] = [Val || {Var,Val} <- Env, Var == Exp],
+      Value = proplists:get_value(Exp, Env),
       {Env,Value,tau};
     cons ->
-      % I think we must return the updated expression
       ConsHdExp = cerl:cons_hd(Exp),
       ConsTlExp = cerl:cons_tl(Exp),
       case is_exp(cerl:cons_hd(Exp)) of
@@ -94,7 +93,7 @@ eval_seq_1(Env,Exp) ->
             {true,{Clause,Bindings}} ->
               % TODO: Improve Env++Bindings (i.e., no duplicates)
               ClauseBody = cerl:clause_body(Clause),
-              NewEnv = Env++Bindings,
+              NewEnv = utils:merge_env(Env, Bindings),
               {NewEnv,ClauseBody,tau};
             {false,_} ->
               io:fwrite("Error: No matching clause~n") 
@@ -136,7 +135,6 @@ eval_seq_1(Env,Exp) ->
           FunArgs = utils:list_from_core(lists:nth(3,CallArgs)),
           {Env,Var,{spawn,{Var,FunName,FunArgs}}};
         _Other ->
-        % should we also eval module or name?
           case is_exp(CallArgs) of
             true ->
               {NewEnv,NewCallArgs,Label} = eval_list(Env,CallArgs),
@@ -179,7 +177,6 @@ eval_seq_1(Env,Exp) ->
                                      cerl:seq_body(Exp)),
           {NewEnv,NewExp,Label};
         false ->
-          % not sure about this
           NewExp = cerl:seq_body(Exp),
           {Env,NewExp,tau}
       end;

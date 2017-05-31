@@ -1,6 +1,8 @@
 -module(utils).
 -export([select_proc/2,select_msg/2,
-         list_from_core/1,pp_system/1,
+         list_from_core/1,
+         update_env/2, merge_env/2,
+         replace/3, pp_system/1,
          opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1,
@@ -24,6 +26,29 @@ list_from_core(Exp) ->
       [cerl:cons_hd(Exp)|list_from_core(cerl:cons_tl(Exp))];
     literal -> [] % Exp == cerl:c_nil()
   end.
+
+update_env({Key, Value}, Env) ->
+  DelEnv = proplists:delete(Key, Env),
+  DelEnv ++ [{Key, Value}].
+
+merge_env(Env, []) -> Env;
+merge_env(Env, [CurBind|RestBind]) ->
+  NewEnv = update_env(CurBind, Env),
+  merge_env(NewEnv, RestBind).
+
+% replace VarName by SubExp in SuperExp
+replace(VarName, SubExp, SuperExp) ->
+  cerl_trees:map(
+    fun (Exp) ->
+      case cerl:type(Exp) of
+        var ->
+          case cerl:var_name(Exp) of
+            VarName -> SubExp;
+            _Other -> Exp
+          end;
+        _Other -> Exp
+      end
+    end, SuperExp).
 
 pp_system(#sys{msgs = Msgs, procs = Procs}) ->
   [pp_msgs(Msgs),
