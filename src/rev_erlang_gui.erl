@@ -314,10 +314,8 @@ refresh_buttons(Options) ->
     {error, _} ->
       utils_gui:disable_rule_buttons(ManualButtons);
     {PidInt, _} ->
-      PidCerl = cerl:c_int(PidInt),
-      FiltOpts = utils:filter_options(Options,PidCerl),
+      FiltOpts = utils:filter_options(Options, PidInt),
       FiltButtons = lists:map(fun utils_gui:option_to_button/1, FiltOpts),
-
       [utils_gui:set_button_if(Button, FiltButtons) ||
                                Button <- ManualButtons]
   end,
@@ -356,9 +354,8 @@ exec_with(Button) ->
     {error, _} ->
       ok;
     {PidInt, _} ->
-      PidCerl = cerl:c_int(PidInt),
       PartOption = utils_gui:button_to_option(Button),
-      Option = PartOption#opt{id = PidCerl},
+      Option = PartOption#opt{id = PidInt},
       NewSystem = rev_erlang:eval_step(System, Option),
       ref_add(?SYSTEM, NewSystem)
       % TODO: What should we say in the status text?

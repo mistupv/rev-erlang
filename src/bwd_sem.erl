@@ -15,7 +15,7 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
       #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
     % % TODO: The following cases have not been tested
     %{send,DestPid,OldEnv,OldExp} -> ;
-    {spawn,SpawnPid,OldEnv,OldExp} ->
+    {spawn,OldEnv,OldExp,SpawnPid} ->
       {_SpawnProc,OldRestProcs} = utils:select_proc(RestProcs,SpawnPid),
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
       #sys{msgs = Msgs, procs = [OldProc|OldRestProcs]}

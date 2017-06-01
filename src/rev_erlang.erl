@@ -52,7 +52,7 @@ eval_step(System, Option) ->
   NewSystem =
     case Type of
       ?TYPE_MSG -> Semantics:eval_sched(System,Id);
-      ?TYPE_PROC -> Semantics:eval_step(System,Id)
+      ?TYPE_PROC -> Semantics:eval_step(System,cerl:c_int(Id))
     end,
   NewSystem.
 

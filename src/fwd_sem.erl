@@ -3,13 +3,6 @@
 
 -include("rev_erlang.hrl").
 
-eval_conc(self,Var,Pid) -> [{Var,Pid}];
-eval_conc(send,FullMsg,Msgs) -> Msgs ++ [FullMsg].
-eval_conc(spawn,Var,CallName,CallArgs,NewEnv) ->
-  freshpidserver ! {self(),new_pid},
-  NewPid = cerl:c_int(receive FreshPid -> FreshPid end),
-  NewProc = #proc{pid = NewPid, env = NewEnv, exp = cerl:c_apply(CallName,CallArgs)},
-  {{Var,NewPid},NewProc}.
 eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
   % Remove this case? This will never happen...
   case length(Mail) of
@@ -148,16 +141,14 @@ eval_seq_1(Env,Exp) ->
                 % improve error
                 {c_literal,_,'erlang'} -> 
                   case CallName of
-                    {c_literal,_,'self'} ->
-                      freshvarserver ! {self(),new_var},
+                    {c_literal, _, 'self'} ->
+                      freshvarserver ! {self(), new_var},
                       Var = receive NewVar -> NewVar end,
-                      {Env,Var,{self,Var}};
-                    {c_literal,_,'!'} ->
-                      freshtimeserver ! {self(),new_time},
-                      Time = receive NewTime -> NewTime end,
-                      DestPid = lists:nth(1,CallArgs),
-                      MsgValue = lists:nth(2,CallArgs),
-                      {Env,MsgValue,{send,Time,DestPid,MsgValue}};
+                      {Env, Var, {self, Var}};
+                    {c_literal, _, '!'} ->
+                      DestPid = lists:nth(1, CallArgs),
+                      MsgValue = lists:nth(2, CallArgs),
+                      {Env, MsgValue, {send, DestPid, MsgValue}};
                     _OtherName ->   
                       erlang:error(undef_name)
                   end;
@@ -167,7 +158,6 @@ eval_seq_1(Env,Exp) ->
           end
       end;
     seq ->
-      % we could also replace 'seq' by 'let' statements
       SeqArg = cerl:seq_arg(Exp),
       case is_exp(SeqArg) of
         true ->
@@ -186,30 +176,37 @@ eval_seq_1(Env,Exp) ->
         {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
   end.
 
-eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
-  {Proc,RestProcs} = utils:select_proc(Procs,Pid),
+eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
+  {Proc, RestProcs} = utils:select_proc(Procs, Pid),
   #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail} = Proc,
-  {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
+  {NewEnv, NewExp, Label} = eval_seq(Env, Exp),
   NewSystem = 
     % Labels can contain more or less information than in the papers
     case Label of
       tau ->
         NewProc = Proc#proc{hist = [{tau,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
-      {self,Var} ->
-        NewBind = eval_conc(self,Var,Pid),
-        NewProc = Proc#proc{hist = [{self,Env,Exp}|Hist], env = NewEnv++NewBind, exp = NewExp},
+      {self, Var} ->
+        NewHist = [{self, Env, Exp}|Hist],
+        RepExp = utils:replace(Var, Pid, NewExp),
+        NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
-      {send,Time,DestPid,MsgValue} ->
-        % TODO: Update send label up to current version of semantics
-        NewMsgs = eval_conc(send,#msg{time = Time, src = Pid, dest = DestPid, val = MsgValue}, Msgs),
-        NewProc = Proc#proc{hist = [{send,Time,DestPid,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
+      {send, DestPid, MsgValue} ->
+        freshtimeserver ! {self(), new_time},
+        Time = receive NewTime -> NewTime end,
+        NewMsg = #msg{dest = DestPid, val = MsgValue, time = Time},
+        NewMsgs = [NewMsg|Msgs],
+        NewHist = [{send, Env, Exp, DestPid, {MsgValue, Time}}|Hist],
+        NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = NewExp},
         #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
-        % TODO: Update spawn label up to current version of semantics (if needed)
-      {spawn,{Var,CallName,CallArgs}} ->
-        {NewBind,SpawnProc} = eval_conc(spawn,Var,CallName,CallArgs,NewEnv),
-        #proc{pid = SpawnPid} = SpawnProc,
-        NewProc = Proc#proc{hist = [{spawn,SpawnPid,Env,Exp}|Hist], env = NewEnv++[NewBind], exp = NewExp},
+      {spawn, {Var, CallName, CallArgs}} ->
+        freshpidserver ! {self(),new_pid},
+        SpawnPid = cerl:c_int(receive FreshPid -> FreshPid end),
+        % TODO: Ask German about NewEnv
+        SpawnProc = #proc{pid = SpawnPid, env = NewEnv, exp = cerl:c_apply(CallName,CallArgs)},
+        NewHist = [{spawn, Env, Exp, SpawnPid}|Hist],
+        RepExp = utils:replace(Var, SpawnPid, NewExp),
+        NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
         #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
         % TODO: Put 'rec' hist here
         % TODO: Update rec label up to current version of semantics
@@ -221,11 +218,10 @@ eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
 
 eval_sched(#sys{msgs = Msgs, procs = Procs},Id) ->
   {Msg,RestMsgs} = utils:select_msg(Msgs,Id),
-  #msg{dest = DestPid} = Msg,
+  #msg{dest = DestPid, val = Value, time = Time} = Msg,
   {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
   #proc{mail = Mail} = Proc,
-  % TODO: Check if msg is delivered "as is"
-  NewMail = [Msg|Mail],
+  NewMail = [{Value, Time}|Mail],
   NewProc = Proc#proc{mail = NewMail},
   #sys{msgs = RestMsgs, procs = [NewProc|RestProcs]}.
 
@@ -297,7 +293,7 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
     ?NOT_EXP ->
       eval_procs_opts(#sys{procs = RestProcs});
     Opt ->
-      [Opt#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid}|eval_procs_opts(#sys{procs = RestProcs})]
+      [Opt#opt{sem = ?MODULE, type = ?TYPE_PROC, id = cerl:concrete(Pid)}|eval_procs_opts(#sys{procs = RestProcs})]
   end.
 
 eval_exp_opt(Exp, Mail) ->
@@ -357,22 +353,25 @@ eval_exp_opt(Exp, Mail) ->
               #opt{rule = ?RULE_SEQ}
           end;
         call ->
-          CallArgs = cerl:call_args(Exp),
           CallModule = cerl:call_module(Exp),
           CallName = cerl:call_name(Exp),
-          case is_exp(CallArgs) of
-            true ->
-              eval_exp_list_opt(CallArgs, Mail);
-            false ->
-              case CallModule of
-                {c_literal,_,'erlang'} ->
-                  case CallName of
-                    {c_literal,_,'spawn'} -> #opt{rule = ?RULE_SPAWN};
-                    {c_literal,_,'self'} -> #opt{rule = ?RULE_SELF};
-                    {c_literal,_,'!'} -> #opt{rule = ?RULE_SEND};
+          case {CallModule, CallName} of
+            {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} -> #opt{rule = ?RULE_SPAWN};
+            _Other ->
+              CallArgs = cerl:call_args(Exp),
+              case is_exp(CallArgs) of
+                true ->
+                  eval_exp_list_opt(CallArgs, Mail);
+                false ->
+                  case CallModule of
+                    {c_literal,_,'erlang'} ->
+                      case CallName of
+                        {c_literal,_,'self'} -> #opt{rule = ?RULE_SELF};
+                        {c_literal,_,'!'} -> #opt{rule = ?RULE_SEND};
+                        _Other -> #opt{rule = ?RULE_SEQ}
+                      end;
                     _Other -> #opt{rule = ?RULE_SEQ}
-                  end;
-                _Other -> #opt{rule = ?RULE_SEQ}
+                  end
               end
           end;
         'receive' ->

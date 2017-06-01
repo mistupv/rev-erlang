@@ -40,10 +40,9 @@
                mail = []}).
 
 % TODO: Add types
--record(msg, {time,
-              src,
-              dest,
-              val}).
+-record(msg, {dest,
+              val,
+              time}).
 
 % TODO: Add types
 -record(sys, {msgs  = [],
