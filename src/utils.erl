@@ -10,15 +10,15 @@
 
 -include("rev_erlang.hrl").
 
-select_proc(Procs,Pid) ->
+select_proc(Procs, Pid) ->
   [Proc] = [ P || P <- Procs, P#proc.pid == Pid],
   RestProcs = [ P || P <- Procs, P#proc.pid /= Pid],
-  {Proc,RestProcs}.
+  {Proc, RestProcs}.
 
-select_msg(Msgs,Time) ->
+select_msg(Msgs, Time) ->
   [Msg] = [ M || M <- Msgs, M#msg.time == Time],
   RestMsgs = [ M || M <- Msgs, M#msg.time /= Time],
-  {Msg,RestMsgs}.
+  {Msg, RestMsgs}.
 
 list_from_core(Exp) ->
   case cerl:type(Exp) of

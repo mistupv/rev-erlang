@@ -203,10 +203,10 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
     end,
   NewSystem.
 
-eval_sched(#sys{msgs = Msgs, procs = Procs},Id) ->
-  {Msg,RestMsgs} = utils:select_msg(Msgs,Id),
+eval_sched(#sys{msgs = Msgs, procs = Procs}, Id) ->
+  {Msg, RestMsgs} = utils:select_msg(Msgs, Id),
   #msg{dest = DestPid, val = Value, time = Time} = Msg,
-  {Proc,RestProcs} = utils:select_proc(Procs,DestPid),
+  {Proc, RestProcs} = utils:select_proc(Procs, DestPid),
   #proc{mail = Mail} = Proc,
   NewMail = [{Value, Time}|Mail],
   NewProc = Proc#proc{mail = NewMail},

@@ -3,23 +3,28 @@
 
 -include("rev_erlang.hrl").
 
-eval_step(#sys{msgs = Msgs, procs = Procs},Pid) ->
-  {Proc,RestProcs} = utils:select_proc(Procs,Pid),
+eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
+  {Proc, RestProcs} = utils:select_proc(Procs, Pid),
   #proc{pid = Pid, hist = [CurHist|RestHist]} = Proc,
   case CurHist of
-    {tau,OldEnv,OldExp} ->
+    {tau, OldEnv, OldExp} ->
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
       #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
-    {self,OldEnv,OldExp} ->
+    {self, OldEnv, OldExp} ->
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
       #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
-    % % TODO: The following cases have not been tested
-    %{send,DestPid,OldEnv,OldExp} -> ;
-    {spawn,OldEnv,OldExp,SpawnPid} ->
-      {_SpawnProc,OldRestProcs} = utils:select_proc(RestProcs,SpawnPid),
+    % Attention: DestPid and MsgValue are not needed to go back 
+    {send, OldEnv, OldExp, _DestPid, {_MsgValue, Time}} ->
+      {_Msg, RestMsgs} = utils:select_msg(Msgs, Time),
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
-      #sys{msgs = Msgs, procs = [OldProc|OldRestProcs]}
-    % {rec,_,_,_} -> false
+      #sys{msgs = RestMsgs, procs = [OldProc|RestProcs]};
+    {spawn, OldEnv, OldExp, SpawnPid} ->
+      {_SpawnProc, OldRestProcs} = utils:select_proc(RestProcs, SpawnPid),
+      OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
+      #sys{msgs = Msgs, procs = [OldProc|OldRestProcs]};
+    {rec, OldEnv, OldExp, _OldMsg, OldMail} ->
+      OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp, mail = OldMail},
+      #sys{msgs = Msgs, procs = [OldProc|RestProcs]}
   end.
 
 eval_sched(System) ->
@@ -46,9 +51,14 @@ eval_procs_opts(#sys{procs = [CurProc|RestProcs]}) ->
       %       false -> false;
       %       _Other -> true
       %     end;
-      % % it is safe to assume that the spawned process is alive
-      %   {spawn,_,_,_} -> true;
-      %   {rec,_,_,_} -> false
+        {spawn,_,_,SpawnPid} ->
+          {SpawnProc, _RestProcs} = utils:select_proc(RestProcs, SpawnPid),
+          #proc{hist = SpawnHist, mail = SpawnMail} = SpawnProc,
+          case {SpawnHist, SpawnMail} of
+            {[], []} -> [#opt{sem = ?MODULE, type = ?TYPE_PROC, id = Pid, rule = ?RULE_SPAWN}|eval_procs_opts(#sys{procs = RestProcs})];
+            _Other -> eval_procs_opts(#sys{procs = RestProcs})
+          end;
+        % {rec,_,_,_} ->
         _Other -> eval_procs_opts(#sys{procs = RestProcs})
       end
   end.
