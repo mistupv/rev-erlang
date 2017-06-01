@@ -3,24 +3,6 @@
 
 -include("rev_erlang.hrl").
 
-eval_conc(rec,Var,ReceiveClauses,Pid,Hist,Env,Exp,Mail) ->
-  % Remove this case? This will never happen...
-  case length(Mail) of
-    0 ->
-      io:fwrite("Error: No messages in mailbox~n"),
-        #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail};
-    _Other ->
-      case matchrec(ReceiveClauses,Mail) of
-        no_match ->
-          io:fwrite("Error: No matching messages~n"),
-          #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail};
-        {Bindings,NewExp,NewMail} ->
-          NewEnv = Env ++ [{Var,NewExp}] ++ Bindings,
-          #proc{pid = Pid, hist = [{rec,Mail,Env,Exp}|Hist],
-                env = NewEnv, exp = Exp, mail = NewMail}
-      end
-  end.
-
 eval_seq(Env,Exp) ->
   case is_list(Exp) of
     true -> eval_list(Env,Exp);
@@ -103,6 +85,7 @@ eval_seq_1(Env,Exp) ->
                                      cerl:let_body(Exp)),
           {NewEnv,NewExp,Label};
         false ->
+          % TODO: Merge envs instead of concat
           LetVars = cerl:let_vars(Exp),
           NewEnv =
             case cerl:let_arity(Exp) of
@@ -138,7 +121,7 @@ eval_seq_1(Env,Exp) ->
               {NewEnv,NewExp,Label};
             false ->
               case CallModule of
-                % improve error
+                % TODO: Improve error (othername is not an error!)
                 {c_literal,_,'erlang'} -> 
                   case CallName of
                     {c_literal, _, 'self'} ->
@@ -149,7 +132,7 @@ eval_seq_1(Env,Exp) ->
                       DestPid = lists:nth(1, CallArgs),
                       MsgValue = lists:nth(2, CallArgs),
                       {Env, MsgValue, {send, DestPid, MsgValue}};
-                    _OtherName ->   
+                    _OtherName ->
                       erlang:error(undef_name)
                   end;
                 _OtherModule ->
@@ -173,7 +156,7 @@ eval_seq_1(Env,Exp) ->
     'receive' ->
         freshvarserver ! {self(),new_var},
         Var = receive NewVar -> NewVar end,
-        {Env,Var,{rec,Var,cerl:receive_clauses(Exp)}}
+        {Env, Var, {rec, Var, cerl:receive_clauses(Exp)}}
   end.
 
 eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
@@ -210,9 +193,13 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
         % TODO: Put 'rec' hist here
         % TODO: Update rec label up to current version of semantics
-      {rec,Var,ReceiveClauses} ->
-        NewProc = eval_conc(rec,Var,ReceiveClauses,Pid,Hist,NewEnv,NewExp,Mail),
-        #sys{msgs = Msgs, procs = [NewProc|RestProcs]}
+      {rec, Var, ReceiveClauses} ->
+        {Bindings, RecExp, ConsMsg, NewMail} = matchrec(ReceiveClauses, Mail),
+        UpdatedEnv = utils:merge_env(NewEnv, Bindings),
+        RepExp = utils:replace(Var, RecExp, NewExp),
+        NewHist = [{rec, Env, Exp, ConsMsg, Mail}|Hist],
+        NewProc = Proc#proc{hist = NewHist, env = UpdatedEnv, exp = RepExp, mail = NewMail},
+        #sys{msgs = Msgs, procs = [NewProc|RestProcs]}        
     end,
   NewSystem.
 
@@ -250,19 +237,20 @@ eval_list(Env,[Exp|Exps]) ->
       {NewEnv,[Exp|NewExp],Label}
   end.
 
-matchrec(Clauses,Mail) ->
-  matchrec(Clauses,Mail,[]).
+matchrec(Clauses, Mail) ->
+  matchrec(Clauses, Mail, []).
 
-matchrec(_,[],_) ->
+matchrec(_, [], _) ->
   no_match;
-matchrec(Clauses,[CurMsg|RestMsgs],AccMsgs) ->
-  case cerl_clauses:reduce(Clauses,[CurMsg]) of
-    {true,{Clause,Bindings}} ->
+matchrec(Clauses, [CurMsg|RestMsgs], AccMsgs) ->
+  {MsgValue, _MsgTime} = CurMsg,
+  case cerl_clauses:reduce(Clauses, [MsgValue]) of
+    {true, {Clause, Bindings}} ->
       ClauseBody = cerl:clause_body(Clause),
-      NewMsgs =  AccMsgs ++ RestMsgs,
-      {Bindings,ClauseBody,NewMsgs};
-    {false,_} ->
-      matchrec(Clauses,RestMsgs,[CurMsg] ++ AccMsgs)
+      NewMsgs =  [AccMsgs|RestMsgs],
+      {Bindings, ClauseBody, CurMsg, NewMsgs};
+    {false, _} ->
+      matchrec(Clauses, RestMsgs, [CurMsg|AccMsgs])
   end.
 
 eval_opts(System) ->

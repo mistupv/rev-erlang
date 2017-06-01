@@ -74,7 +74,7 @@ pp_msg(#msg{dest = DestPid, val = MsgValue, time = Time}) ->
    integer_to_list(Time),
    "})"].
 
-pp_proc(#proc{pid=Pid, hist = Hist, env = Env, exp = Exp, mail = Mail}) ->
+pp_proc(#proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail}) ->
   ["{",
    pp(Pid),",",
    pp_hist(Hist),",",
@@ -85,15 +85,15 @@ pp_proc(#proc{pid=Pid, hist = Hist, env = Env, exp = Exp, mail = Mail}) ->
 
 pp(CoreForm) -> core_pp:format(CoreForm).
 
-pp_env([]) -> "[]";
+pp_env([]) -> "{}";
 pp_env(Env) ->
   PairsList = [pp_pair(Var,Val) || {Var,Val} <- Env],
-  ["[",
+  ["{",
    string:join(PairsList,","),
-   "]"].
+   "}"].
 
 pp_pair(Var,Val) ->
-  ["{",pp(Var)," -> ",pp(Val),"}"].
+  [pp(Var)," -> ",pp(Val)].
 
 pp_hist([]) -> "[]";
 pp_hist([CurHist|_RestHist]) ->
@@ -116,16 +116,17 @@ pp_hist([CurHist|_RestHist]) ->
       ["rec(t,e,{",
        pp(Value),",",
        integer_to_list(Time),
-       "}):hs"]
+       "},q):hs"]
   end.
 
+pp_mail([]) -> "[]";
 pp_mail(Mail) ->
-  MailList = [pp_msg_mail(Msg) || Msg <- Mail],
+  MailList = [pp_msg_mail(Val, Time) || {Val, Time} <- Mail],
   ["[",
    string:join(MailList,","),
    "]"].
 
-pp_msg_mail({Val,Time}) ->
+pp_msg_mail(Val, Time) ->
   ["{",pp(Val),",",
    integer_to_list(Time),"}"].
 
