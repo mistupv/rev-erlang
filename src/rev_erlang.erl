@@ -72,7 +72,7 @@ eval_mult_1(System, Option, Steps, StepsDone) ->
     [] ->
       {System, StepsDone};
     _Other ->
-      RandIdx = random:uniform(length(Opts)),
+      RandIdx = rand:uniform(length(Opts)),
       RandOpt = lists:nth(RandIdx, Opts),
       NewSystem = eval_step(System, RandOpt),
       eval_mult_1(NewSystem, Option, Steps, StepsDone + 1)
@@ -84,7 +84,7 @@ eval_norm(System) ->
     [] ->
       System;
     _Other ->
-      RandIdx = random:uniform(length(Opts)),
+      RandIdx = rand:uniform(length(Opts)),
       RandOpt = lists:nth(RandIdx, Opts),
       NewSystem = eval_step(System, RandOpt),
       eval_norm(NewSystem)

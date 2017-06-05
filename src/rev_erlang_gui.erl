@@ -314,7 +314,9 @@ refresh_buttons(Options) ->
     {error, _} ->
       utils_gui:disable_rule_buttons(ManualButtons);
     {PidInt, _} ->
+      ?LOG("full options: " ++ ?TO_STRING(Options)),
       FiltOpts = utils:filter_options(Options, PidInt),
+      ?LOG("filtered options: " ++ ?TO_STRING(FiltOpts)),
       FiltButtons = lists:map(fun utils_gui:option_to_button/1, FiltOpts),
       [utils_gui:set_button_if(Button, FiltButtons) ||
                                Button <- ManualButtons]
@@ -343,7 +345,7 @@ start() ->
   StringChoice = wxChoice:getString(FunChoice,NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
-  ?LOG("start fun " ++ StringChoice ++" with args " ++ InputText),
+  ?LOG("start fun " ++ StringChoice ++ " with args " ++ InputText),
   start(Fun,Args).
 
 exec_with(Button) ->

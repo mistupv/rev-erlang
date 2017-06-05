@@ -222,4 +222,4 @@ topmost_rec([CurHist|RestHist]) ->
   case CurHist of
     {rec,_,_,_,_} -> CurHist;
     _Other -> topmost_rec(RestHist)
-  end. 
+  end.
