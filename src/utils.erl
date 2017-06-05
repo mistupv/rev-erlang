@@ -1,12 +1,13 @@
 -module(utils).
--export([select_proc/2,select_msg/2,
+-export([select_proc/2, select_msg/2, select_proc_with_time/2,
          list_from_core/1,
          update_env/2, merge_env/2,
          replace/3, pp_system/1,
          % opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1,
-         filter_options/2,has_fwd/1,has_bwd/1]).
+         filter_options/2, has_fwd/1, has_bwd/1,
+         is_queue_minus_msg/3, topmost_rec/1]).
 
 -include("rev_erlang.hrl").
 
@@ -19,6 +20,19 @@ select_msg(Msgs, Time) ->
   [Msg] = [ M || M <- Msgs, M#msg.time == Time],
   RestMsgs = [ M || M <- Msgs, M#msg.time /= Time],
   {Msg, RestMsgs}.
+
+select_proc_with_time(Procs, Time) ->
+  ProcMailPairs = [ {Proc, Proc#proc.mail} || Proc <- Procs],
+  lists:filter( fun ({_, Mail}) ->
+                  case Mail of
+                    [] ->
+                      false;
+                    [{_, MsgTime}|_RestMsgs] ->
+                      MsgTime == Time
+                  end
+                end,
+                ProcMailPairs).
+
 
 list_from_core(Exp) ->
   case cerl:type(Exp) of
@@ -197,3 +211,15 @@ has_fwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
 has_bwd([]) -> false;
 has_bwd([#opt{sem = ?BWD_SEM}|_RestOpts]) -> true;
 has_bwd([_CurOpt|RestOpts]) -> has_bwd(RestOpts).
+
+% returns true if Queue\Msg == OtherQueue
+is_queue_minus_msg(Queue, Msg, OtherQueue) ->
+  ThisQueue = lists:delete(Queue, Msg),
+  ThisQueue == OtherQueue.
+
+topmost_rec([]) -> no_rec;
+topmost_rec([CurHist|RestHist]) ->
+  case CurHist of
+    {rec,_,_,_,_} -> CurHist;
+    _Other -> topmost_rec(RestHist)
+  end. 

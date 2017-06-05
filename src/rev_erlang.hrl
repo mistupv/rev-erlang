@@ -31,6 +31,8 @@
 -define(MULT_BWD, mult_bwd).
 
 -define(NOT_EXP, not_exp).
+-define(NULL_RULE, null_rule).
+-define(NULL_OPT, null_opt).
 
 % TODO: Add types
 -record(proc, {pid,
