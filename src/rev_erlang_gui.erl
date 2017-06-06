@@ -310,13 +310,12 @@ refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
   ManualButtons = lists:seq(?FORW_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
+  ?LOG("full options: " ++ ?TO_STRING(Options)),
   case string:to_integer(PidText) of
     {error, _} ->
       utils_gui:disable_rule_buttons(ManualButtons);
     {PidInt, _} ->
-      ?LOG("full options: " ++ ?TO_STRING(Options)),
       FiltOpts = utils:filter_options(Options, PidInt),
-      ?LOG("filtered options: " ++ ?TO_STRING(FiltOpts)),
       FiltButtons = lists:map(fun utils_gui:option_to_button/1, FiltOpts),
       [utils_gui:set_button_if(Button, FiltButtons) ||
                                Button <- ManualButtons]
