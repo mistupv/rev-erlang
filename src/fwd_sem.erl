@@ -66,7 +66,6 @@ eval_seq_1(Env,Exp) ->
           CaseClauses = cerl:case_clauses(Exp),
           case cerl_clauses:reduce(CaseClauses,[CaseArg]) of
             {true,{Clause,Bindings}} ->
-              % TODO: Improve Env++Bindings (i.e., no duplicates)
               ClauseBody = cerl:clause_body(Clause),
               NewEnv = utils:merge_env(Env, Bindings),
               {NewEnv,ClauseBody,tau};
@@ -87,12 +86,12 @@ eval_seq_1(Env,Exp) ->
         false ->
           % TODO: Merge envs instead of concat
           LetVars = cerl:let_vars(Exp),
-          NewEnv =
+          LetEnv =
             case cerl:let_arity(Exp) of
               1 -> lists:zip(LetVars,[LetArg]);
               _Other -> lists:zip(LetVars,LetArg)
-            end
-           ++ Env,
+            end,
+          NewEnv = utils:merge_env(Env, LetEnv),
           NewExp = cerl:let_body(Exp),
           {NewEnv,NewExp,tau}
       end;
@@ -247,7 +246,7 @@ matchrec(Clauses, [CurMsg|RestMsgs], AccMsgs) ->
   case cerl_clauses:reduce(Clauses, [MsgValue]) of
     {true, {Clause, Bindings}} ->
       ClauseBody = cerl:clause_body(Clause),
-      NewMsgs =  [AccMsgs|RestMsgs],
+      NewMsgs =  AccMsgs ++ RestMsgs,
       {Bindings, ClauseBody, CurMsg, NewMsgs};
     {false, _} ->
       matchrec(Clauses, RestMsgs, [CurMsg|AccMsgs])

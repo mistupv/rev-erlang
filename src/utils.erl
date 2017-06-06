@@ -103,7 +103,7 @@ pp_env([]) -> "{}";
 pp_env(Env) ->
   PairsList = [pp_pair(Var,Val) || {Var,Val} <- Env],
   ["{",
-   string:join(PairsList,","),
+   string:join(PairsList,", "),
    "}"].
 
 pp_pair(Var,Val) ->
@@ -214,7 +214,7 @@ has_bwd([_CurOpt|RestOpts]) -> has_bwd(RestOpts).
 
 % returns true if Queue\Msg == OtherQueue
 is_queue_minus_msg(Queue, Msg, OtherQueue) ->
-  ThisQueue = lists:delete(Queue, Msg),
+  ThisQueue = lists:delete(Msg, Queue),
   ThisQueue == OtherQueue.
 
 topmost_rec([]) -> no_rec;

@@ -29,7 +29,7 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
 
 eval_sched(System, Id) ->
   #sys{msgs = Msgs, procs = Procs} = System,
-  [Proc] = utils:select_proc_with_time(System, Id),
+  [{Proc,_}] = utils:select_proc_with_time(Procs, Id),
   Pid = Proc#proc.pid,
   {_, RestProcs} = utils:select_proc(Procs, Pid),
   [{Value, Id}|RestMsgs] = Proc#proc.mail,
@@ -46,13 +46,23 @@ eval_opts(System) ->
 
 eval_sched_opts(#sys{procs = Procs}) ->
   Opts = [eval_sched_opt(Proc) || Proc <- Procs],
-  lists:filter(fun (X) -> case X of ?NULL_OPT -> false; _Other -> true end end, Opts).
+  lists:filter(fun (X) ->
+                  case X of
+                    ?NULL_OPT -> false;
+                    _Other -> true
+                  end
+                end, Opts).
 
 eval_procs_opts(System) ->
   #sys{msgs = Msgs, procs = Procs} = System,
   ProcPairs = [utils:select_proc(Procs, Proc#proc.pid) || Proc <- Procs ],
   Opts = [eval_proc_opt(#sys{msgs = Msgs, procs = RestProcs}, Proc) ||  {Proc, RestProcs} <- ProcPairs],
-  lists:filter(fun (X) -> case X of ?NULL_OPT -> false; _Other -> true end end, Opts).
+  lists:filter( fun (X) ->
+                  case X of
+                    ?NULL_OPT -> false;
+                    _Other -> true
+                  end
+                end, Opts).
 
 eval_proc_opt(#sys{msgs = Msgs, procs = RestProcs}, CurProc) ->
   Hist = CurProc#proc.hist,
