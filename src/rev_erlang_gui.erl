@@ -322,8 +322,10 @@ refresh_buttons(Options) ->
   end,
   HasFwdOptions = utils:has_fwd(Options),
   HasBwdOptions = utils:has_bwd(Options),
-  utils_gui:set_fwd_button_if(HasFwdOptions),
-  utils_gui:set_bwd_button_if(HasBwdOptions).
+  HasNormOptions = utils:has_norm(Options),
+  utils_gui:set_ref_button_if(?FORWARD_BUTTON, HasFwdOptions),
+  utils_gui:set_ref_button_if(?BACKWARD_BUTTON, HasBwdOptions),
+  utils_gui:set_ref_button_if(?NORMALIZE_BUTTON, HasNormOptions).
 
 refresh() ->
   case utils_gui:is_app_running() of

@@ -1,8 +1,7 @@
 -module(utils_gui).
 -export([is_app_loaded/0, is_app_running/0,
          get_button_label/1, option_to_button/1, button_to_option/1,
-         disable_rule_buttons/1, set_button_if/2, set_fwd_button_if/1,
-         set_bwd_button_if/1,
+         disable_rule_buttons/1, set_button_if/2, set_ref_button_if/2,
          set_choices/1, stop_servers/0, update_status_text/1]).
 
 -include("rev_erlang.hrl").
@@ -85,23 +84,13 @@ set_button_if(Button, EnabledButtons) ->
     false -> wxButton:disable(ref_lookup(Button))
   end.
 
-set_fwd_button_if(Cond) ->
-  FwdRef = ref_lookup(?FORWARD_BUTTON),
-  NormRef = ref_lookup(?NORMALIZE_BUTTON),
+set_ref_button_if(Ref, Cond) ->
+  RefButton = ref_lookup(Ref),
   case Cond of
     true ->
-      wxButton:enable(FwdRef),
-      wxButton:enable(NormRef);
+      wxButton:enable(RefButton);
     false ->
-      wxButton:disable(FwdRef),
-      wxButton:disable(NormRef)
-  end.
-
-set_bwd_button_if(Cond) ->
-  BwdRef = ref_lookup(?BACKWARD_BUTTON),
-  case Cond of
-    true -> wxButton:enable(BwdRef);
-    false -> wxButton:disable(BwdRef)
+      wxButton:disable(RefButton)
   end.
 
 set_choices(Choices) ->

@@ -6,7 +6,7 @@
          % opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1,
-         filter_options/2, has_fwd/1, has_bwd/1,
+         filter_options/2, has_fwd/1, has_bwd/1, has_norm/1,
          is_queue_minus_msg/3, topmost_rec/1]).
 
 -include("rev_erlang.hrl").
@@ -211,6 +211,14 @@ has_fwd([_CurOpt|RestOpts]) -> has_fwd(RestOpts).
 has_bwd([]) -> false;
 has_bwd([#opt{sem = ?BWD_SEM}|_RestOpts]) -> true;
 has_bwd([_CurOpt|RestOpts]) -> has_bwd(RestOpts).
+
+has_norm([]) -> false;
+has_norm([#opt{sem = ?FWD_SEM, rule = Rule}|RestOpts]) ->
+  case Rule of
+    ?RULE_SCHED -> has_norm(RestOpts);
+    _OtherRule -> true
+  end;
+has_norm([_CurOpt|RestOpts]) -> has_norm(RestOpts).
 
 % returns true if Queue\Msg == OtherQueue
 is_queue_minus_msg(Queue, Msg, OtherQueue) ->
