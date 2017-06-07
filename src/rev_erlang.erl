@@ -79,15 +79,18 @@ eval_mult_1(System, Option, Steps, StepsDone) ->
   end.
 
 eval_norm(System) ->
+  eval_norm_1(System, 0).
+
+eval_norm_1(System, Steps) ->
   Opts = fwd_sem:eval_procs_opts(System),
   case Opts of
     [] ->
-      System;
+      {System, Steps};
     _Other ->
       RandIdx = rand:uniform(length(Opts)),
       RandOpt = lists:nth(RandIdx, Opts),
       NewSystem = eval_step(System, RandOpt),
-      eval_norm(NewSystem)
+      eval_norm_1(NewSystem, Steps + 1)
   end.
 
 % eval(System) ->

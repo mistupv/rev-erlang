@@ -2,7 +2,8 @@
 -export([is_app_loaded/0, is_app_running/0,
          get_button_label/1, option_to_button/1, button_to_option/1,
          disable_rule_buttons/1, set_button_if/2, set_ref_button_if/2,
-         set_choices/1, stop_servers/0, update_status_text/1]).
+         set_choices/1, stop_servers/0, update_status_text/1,
+         sttext_single/1, sttext_mult/2, sttext_norm/1]).
 
 -include("rev_erlang.hrl").
 -include("rev_erlang_gui.hrl").
@@ -105,6 +106,28 @@ stop_servers() ->
       ok;
     false -> ok
   end.
+
+sttext_single(Button) ->
+  #opt{sem = Sem} = button_to_option(Button),
+  SemStr =
+  case Sem of
+    ?FWD_SEM -> " forward ";
+    ?BWD_SEM -> " backward "
+  end,
+  LabelStr = get_button_label(Button),
+  FullStr = "Fired" ++ SemStr ++ LabelStr ++ " rule",
+  update_status_text(FullStr).
+
+sttext_norm(Steps) ->
+  StepsStr = integer_to_list(Steps),
+  FullStr = StepsStr ++ " steps done",
+  update_status_text(FullStr).
+
+sttext_mult(StepsDone, Steps) ->
+  StepsDoneStr = integer_to_list(StepsDone),
+  StepsStr = integer_to_list(Steps),
+  FullStr = StepsDoneStr ++ " of " ++ StepsStr ++ " steps done",
+  update_status_text(FullStr).
 
 update_status_text(String) ->
   Frame = ref_lookup(?FRAME),

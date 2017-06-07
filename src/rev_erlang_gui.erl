@@ -361,8 +361,6 @@ exec_with(Button) ->
       Option = PartOption#opt{id = PidInt},
       NewSystem = rev_erlang:eval_step(System, Option),
       ref_add(?SYSTEM, NewSystem)
-      % TODO: What should we say in the status text?
-      % update_status_text("")
   end.
 
 eval_mult(Button) ->
@@ -378,16 +376,16 @@ eval_mult(Button) ->
           ?FORWARD_BUTTON -> ?MULT_FWD;
           ?BACKWARD_BUTTON -> ?MULT_BWD
         end,
-      {NewSystem, _StepsDone} = rev_erlang:eval_mult(System, Option, Steps),
-      ref_add(?SYSTEM, NewSystem)
-      % TODO: What should we say in the status text?
-      % DoneSteps/Steps
+      {NewSystem, StepsDone} = rev_erlang:eval_mult(System, Option, Steps),
+      ref_add(?SYSTEM, NewSystem),
+      {StepsDone, Steps}
   end.
 
 eval_norm() ->
   System = ref_lookup(?SYSTEM),
-  NewSystem = rev_erlang:eval_norm(System),
-  ref_add(?SYSTEM, NewSystem).
+  {NewSystem, StepsDone} = rev_erlang:eval_norm(System),
+  ref_add(?SYSTEM, NewSystem),
+  StepsDone.
 
 loop() ->
     receive
@@ -396,17 +394,20 @@ loop() ->
           start(),
           loop();
         #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
-          eval_norm(),
+          StepsDone = eval_norm(),
+          utils_gui:sttext_norm(StepsDone),
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_SCHED_BUTTON) ->
           exec_with(RuleButton),
+          utils_gui:sttext_single(RuleButton),
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton == ?FORWARD_BUTTON) or (RuleButton == ?BACKWARD_BUTTON) ->
-          eval_mult(RuleButton),
+          {StepsDone, TotalSteps} = eval_mult(RuleButton),
+          utils_gui:sttext_mult(StepsDone, TotalSteps),
           refresh(),
           loop();
         %% -------------------- Text handlers -------------------- %%
