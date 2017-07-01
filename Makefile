@@ -1,19 +1,17 @@
-# ROOT_DIR = $(shell dirname $(realpath $(lastword $(MAKEFILE_LIST))))
-# ERLC_DIR = $(shell which erlc)
-# ERLC_PATH = $(shell dirname $(lastword $(ERLC_DIR)))
 
-compile:
-	@rm -Rf ebin
+compile: clean
 	@mkdir ebin
-	@erlc -o ebin src/*.erl 
+	@erlc -o ebin src/*.erl
+	@$(MAKE) script
+
+script:
+	@echo "erl -noshell -pa ebin -eval \"rev_erlang:start().\" -s init stop" > rev-erlang.sh
+	@chmod +x rev-erlang.sh
 
 clean:
 	@rm -Rf ebin
 
-debug:
-	@rm -Rf ebin
+debug: clean
 	@mkdir ebin
-	@erlc -Ddebug -o ebin src/*.erl 
-
-test:
-	@erl -noshell -pa ebin -eval "rev_erlang:start()." -s init stop
+	@erlc -Ddebug -o ebin src/*.erl
+	@$(MAKE) script
