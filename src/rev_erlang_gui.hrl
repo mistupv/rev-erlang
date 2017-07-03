@@ -1,4 +1,4 @@
--record(status, {loaded = false,
+-record(status, {loaded  = false,
                  running = false}).
 
 -define(FRAME_SIZE_INIT, {800, 600}).

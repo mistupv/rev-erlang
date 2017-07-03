@@ -14,27 +14,29 @@
 -define(FWD_SEM, fwd_sem).
 -define(BWD_SEM, bwd_sem).
 
--define(TYPE_MSG, msg).
+-define(TYPE_MSG,  msg).
 -define(TYPE_PROC, proc).
 
--define(RULE_SEQ, seq).
--define(RULE_CHECK, check).
--define(RULE_SEND, send).
+-define(RULE_SEQ,      seq).
+-define(RULE_CHECK,    check).
+-define(RULE_SEND,     send).
 -define(RULE_RECEIVE, 'receive').
--define(RULE_SPAWN, spawn).
--define(RULE_SELF, self).
--define(RULE_SCHED, sched).
+-define(RULE_SPAWN,    spawn).
+-define(RULE_SELF,     self).
+-define(RULE_SCHED,    sched).
+
+-define(FILE_PATH, 600).
 
 % ets defs
--define(FILE_PATH, 508).
+-define(APP_REF, '_._app').
 -define(GUI_REF, '_._gui').
 
 -define(MULT_FWD, mult_fwd).
 -define(MULT_BWD, mult_bwd).
 
--define(NOT_EXP, not_exp).
+-define(NOT_EXP,   not_exp).
 -define(NULL_RULE, null_rule).
--define(NULL_OPT, null_opt).
+-define(NULL_OPT,  null_opt).
 
 % TODO: Add types
 -record(proc, {pid,
@@ -52,7 +54,8 @@
 -record(sys, {msgs  = [],
               procs = []}).
 
--record(opt, {sem, % forward or backward
-              type,  % proc or msg
-              id, % integer
+
+-record(opt, {sem,    % forward or backward
+              type,   % proc or msg
+              id,     % integer
               rule}). % seq, spawn, ...
