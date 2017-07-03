@@ -4,13 +4,13 @@
          eval_opts/1, eval_step/2, eval_mult/3, eval_norm/1]).
 
 -include("rev_erlang.hrl").
-                      
-%start(ModuleFile,Fun,Args) ->
+
 start() ->
   rev_erlang_gui:setup_gui(),
   ok.
 
 start_refs(FunDefs) ->
+  ?LOG("starting refs"),
   ref_start(),
   ref_add(?FUN_DEFS,   FunDefs),
   ref_add(?FRESH_PID,  2),
@@ -18,6 +18,7 @@ start_refs(FunDefs) ->
   ref_add(?FRESH_VAR,  1).
 
 stop_refs() ->
+  ?LOG("stopping refs"),
   ref_stop().
 
 eval_opts(System) ->  

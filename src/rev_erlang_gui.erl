@@ -254,7 +254,10 @@ loadFile(File) ->
       CodeText = ref_lookup(?CODE_TEXT),
       wxTextCtrl:setValue(CodeText,core_pp:format(CleanCoreForms)),
       % update status
-      ref_add(?STATUS,#status{loaded = {true,FunDefs}}),
+      Status = ref_lookup(?STATUS),
+      ref_add(?STATUS, Status#status{loaded = {true,FunDefs}}),
+      LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
+      wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_CODE),
       utils_gui:set_choices(utils:moduleNames(CleanCoreForms)),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
@@ -296,7 +299,7 @@ init_system(Fun,Args) ->
 
 start(Fun,Args) ->
   Status = ref_lookup(?STATUS),
-  #status{loaded = {true,FunDefs}} = Status,
+  #status{loaded = {true, FunDefs}} = Status,
   utils_gui:stop_refs(),
   rev_erlang:start_refs(FunDefs),
   init_system(Fun,Args),

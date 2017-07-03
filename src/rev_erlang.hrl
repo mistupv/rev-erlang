@@ -43,8 +43,6 @@
 -define(NULL_RULE, null_rule).
 -define(NULL_OPT,  null_opt).
 
-
-
 % TODO: Add types
 -record(proc, {pid,
                hist = [],
