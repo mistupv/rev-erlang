@@ -43,12 +43,10 @@ eval_seq_1(Env,Exp) ->
                                        NewApplyArgs),
           {NewEnv,NewExp,Label};
         false ->
-          fdserver ! {self(),ApplyOp},
-          receive
-            FunDef ->
-              FunBody = cerl:fun_body(FunDef),
-              FunArgs = cerl:fun_vars(FunDef)
-          end,
+          FunDefs = ref_lookup(?FUN_DEFS),
+          FunDef = utils:fundef_lookup(ApplyOp, FunDefs),
+          FunBody = cerl:fun_body(FunDef),
+          FunArgs = cerl:fun_vars(FunDef),
           % standard zip is used here (pretty-printer forces it)
           NewEnv = lists:zip(FunArgs,ApplyArgs),
           {NewEnv,FunBody,tau}
@@ -101,9 +99,10 @@ eval_seq_1(Env,Exp) ->
       CallName = cerl:call_name(Exp),
 
       case {CallModule, CallName} of
-        {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} -> 
-          freshvarserver ! {self(),new_var},
-          Var = receive NewVar -> NewVar end,
+        {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} ->
+          VarNum = ref_lookup(?FRESH_VAR),
+          ref_add(?FRESH_VAR, VarNum + 1),
+          Var = utils:build_var(VarNum),
           FunName = lists:nth(2,CallArgs),
           % here, Core just transforms Args to a literal
           %({c_literal,[],[e_1,e_2]} without transforming e_1)
@@ -124,8 +123,9 @@ eval_seq_1(Env,Exp) ->
                 {c_literal,_,'erlang'} -> 
                   case CallName of
                     {c_literal, _, 'self'} ->
-                      freshvarserver ! {self(), new_var},
-                      Var = receive NewVar -> NewVar end,
+                      VarNum = ref_lookup(?FRESH_VAR),
+                      ref_add(?FRESH_VAR, VarNum + 1),
+                      Var = utils:build_var(VarNum),
                       {Env, Var, {self, Var}};
                     {c_literal, _, '!'} ->
                       DestPid = lists:nth(1, CallArgs),
@@ -153,8 +153,9 @@ eval_seq_1(Env,Exp) ->
           {Env,NewExp,tau}
       end;
     'receive' ->
-        freshvarserver ! {self(),new_var},
-        Var = receive NewVar -> NewVar end,
+        VarNum = ref_lookup(?FRESH_VAR),
+        ref_add(?FRESH_VAR, VarNum + 1),
+        Var = utils:build_var(VarNum),
         {Env, Var, {rec, Var, cerl:receive_clauses(Exp)}}
   end.
 
@@ -174,16 +175,17 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
         #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
       {send, DestPid, MsgValue} ->
-        freshtimeserver ! {self(), new_time},
-        Time = receive NewTime -> NewTime end,
+        Time = ref_lookup(?FRESH_TIME),
+        ref_add(?FRESH_TIME, Time + 1),
         NewMsg = #msg{dest = DestPid, val = MsgValue, time = Time},
         NewMsgs = [NewMsg|Msgs],
         NewHist = [{send, Env, Exp, DestPid, {MsgValue, Time}}|Hist],
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = NewExp},
         #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
       {spawn, {Var, CallName, CallArgs}} ->
-        freshpidserver ! {self(),new_pid},
-        SpawnPid = cerl:c_int(receive FreshPid -> FreshPid end),
+        PidNum = ref_lookup(?FRESH_PID),
+        ref_add(?FRESH_PID, PidNum + 1),
+        SpawnPid = cerl:c_int(PidNum),
         % TODO: Ask German about NewEnv
         SpawnProc = #proc{pid = SpawnPid, env = NewEnv, exp = cerl:c_apply(CallName,CallArgs)},
         NewHist = [{spawn, Env, Exp, SpawnPid}|Hist],
@@ -379,3 +381,9 @@ eval_exp_list_opt([CurExp|RestExp], Mail) ->
     true -> eval_exp_opt(CurExp, Mail);
     false -> eval_exp_list_opt(RestExp, Mail)
   end.
+
+ref_add(Id, Ref) ->
+    ets:insert(?APP_REF, {Id, Ref}).
+
+ref_lookup(Id) ->
+    ets:lookup_element(?APP_REF, Id, 2).

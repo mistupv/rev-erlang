@@ -21,7 +21,7 @@ setup_gui() ->
   setupMainPanel(Frame),
   wxFrame:show(Frame),
   loop(),
-  utils_gui:stop_servers(),
+  utils_gui:stop_refs(),
   ref_stop().
 
 setupMainPanel(Parent) ->
@@ -297,8 +297,8 @@ init_system(Fun,Args) ->
 start(Fun,Args) ->
   Status = ref_lookup(?STATUS),
   #status{loaded = {true,FunDefs}} = Status,
-  utils_gui:stop_servers(),
-  rev_erlang:start_servers(FunDefs),
+  utils_gui:stop_refs(),
+  rev_erlang:start_refs(FunDefs),
   init_system(Fun,Args),
   refresh(),
   LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),

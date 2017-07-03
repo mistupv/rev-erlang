@@ -1,5 +1,6 @@
 -module(utils).
--export([select_proc/2, select_msg/2, select_proc_with_time/2,
+-export([fundef_lookup/2, build_var/1,
+         select_proc/2, select_msg/2, select_proc_with_time/2,
          list_from_core/1,
          update_env/2, merge_env/2,
          replace/3, pp_system/1,
@@ -10,6 +11,14 @@
          is_queue_minus_msg/3, topmost_rec/1]).
 
 -include("rev_erlang.hrl").
+
+fundef_lookup(FunName, FunDefs) ->
+  {_, FunDef} = lists:keyfind(FunName, 1, FunDefs),
+  FunDef.
+
+build_var(Num) ->
+  NumAtom = list_to_atom("y_" ++ integer_to_list(Num)),
+  cerl:c_var(NumAtom).
 
 select_proc(Procs, Pid) ->
   [Proc] = [ P || P <- Procs, P#proc.pid == Pid],
