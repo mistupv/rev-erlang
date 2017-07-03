@@ -246,14 +246,13 @@ setupMenu() ->
 
 loadFile(File) ->
   Frame = ref_lookup(?FRAME),
-  case compile:file(File,[to_core,binary]) of
-    {ok,_,CoreForms} ->
+  case compile:file(File, [to_core,binary]) of
+    {ok, _, CoreForms} ->
       Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
-      CleanCoreForms = cerl_trees:map(Stripper,CoreForms),
+      CleanCoreForms = cerl_trees:map(Stripper, CoreForms),
       FunDefs = cerl:module_defs(CleanCoreForms),
       CodeText = ref_lookup(?CODE_TEXT),
       wxTextCtrl:setValue(CodeText,core_pp:format(CleanCoreForms)),
-      % update status
       Status = ref_lookup(?STATUS),
       ref_add(?STATUS, Status#status{loaded = {true,FunDefs}}),
       LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
@@ -261,11 +260,9 @@ loadFile(File) ->
       utils_gui:set_choices(utils:moduleNames(CleanCoreForms)),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
-      % TODO: Improve this status text
-      wxFrame:setStatusText(Frame,"Loaded!");
+      wxFrame:setStatusText(Frame, "Loaded file " ++ File);
     _Other ->
-      % TODO: Improve this status text
-      wxFrame:setStatusText(Frame,"Error when loading file")
+      wxFrame:setStatusText(Frame, "Error: Could not compile file " ++ File)
   end.
 
 openDialog(Parent) ->
@@ -306,8 +303,11 @@ start(Fun,Args) ->
   refresh(),
   LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
   wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_STATE),
-  % TODO: Improve this status text with fun and args
-  utils_gui:update_status_text("Started!").
+  {FunName, FunArity} = cerl:var_name(Fun),
+  StartString = "Started system with " ++
+                atom_to_list(FunName) ++ "/" ++
+                integer_to_list(FunArity) ++ " fun application!",
+  utils_gui:update_status_text(StartString).
 
 refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
