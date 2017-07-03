@@ -47,3 +47,4 @@
 
 -define(INFO_TEXT, "A reversible semantics for Erlang. More info at: https://github.com/mistupv/rev-erlang").
 -define(ERROR_NUM_STEP, "The number of steps is not correct.").
+-define(ERROR_NUM_ARGS, "The number of arguments is not correct.").

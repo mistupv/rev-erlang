@@ -349,8 +349,16 @@ start() ->
   StringChoice = wxChoice:getString(FunChoice,NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
-  ?LOG("start fun " ++ StringChoice ++ " with args " ++ InputText),
-  start(Fun,Args).
+  {_, FunArity} = cerl:var_name(Fun),
+  case FunArity == length(Args) of
+    true ->
+      start(Fun,Args),
+      ?LOG("start fun " ++ StringChoice ++ " with args " ++ InputText);
+    false ->
+      utils_gui:update_status_text(?ERROR_NUM_ARGS),
+      error
+  end.
+
 
 exec_with(Button) ->
   System = ref_lookup(?SYSTEM),
