@@ -25,11 +25,16 @@
 -define(RULE_SELF,     self).
 -define(RULE_SCHED,    sched).
 
--define(FILE_PATH, 600).
-
 % ets defs
 -define(APP_REF, '_._app').
 -define(GUI_REF, '_._gui').
+
+-define(FILE_PATH,  200).
+
+-define(FUN_DEFS,   300).
+-define(FRESH_PID,  301).
+-define(FRESH_TIME, 302).
+-define(FRESH_VAR,  303).
 
 -define(MULT_FWD, mult_fwd).
 -define(MULT_BWD, mult_bwd).
@@ -37,6 +42,8 @@
 -define(NOT_EXP,   not_exp).
 -define(NULL_RULE, null_rule).
 -define(NULL_OPT,  null_opt).
+
+
 
 % TODO: Add types
 -record(proc, {pid,

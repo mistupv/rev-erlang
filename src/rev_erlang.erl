@@ -11,36 +11,42 @@ start() ->
   ok.
 
 start_servers(FunDefs) ->
-  FunDefServer = spawn(fundefserver,start,[FunDefs]),
-  case lists:member(fdserver,registered()) of
-    true -> unregister(fdserver);
-    false -> ok
-  end,
-  register(fdserver,FunDefServer),
-  FreshPidServer = spawn(freshpidserver,start,[]),
-  case lists:member(freshpidserver,registered()) of
-    true -> unregister(freshpidserver);
-    false -> ok
-  end,
-  register(freshpidserver,FreshPidServer),
-  FreshTimeServer = spawn(freshtimeserver,start,[]),
-  case lists:member(freshtimeserver,registered()) of
-    true -> unregister(freshtimeserver);
-    false -> ok
-  end,
-  register(freshtimeserver,FreshTimeServer),
-  FreshVarServer = spawn(freshvarserver,start,[]),
-  case lists:member(freshvarserver,registered()) of
-    true -> unregister(freshvarserver);
-    false -> ok
-  end,
-  register(freshvarserver,FreshVarServer).
+  % FunDefServer = spawn(fundefserver,start,[FunDefs]),
+  % case lists:member(fdserver,registered()) of
+  %   true -> unregister(fdserver);
+  %   false -> ok
+  % end,
+  % register(fdserver,FunDefServer),
+  ref_start(),
+  ref_add(?FUN_DEFS,   FunDefs),
+  ref_add(?FRESH_PID,  2),
+  ref_add(?FRESH_TIME, 1),
+  ref_add(?FRESH_VAR,  1).
+  % FreshPidServer = spawn(freshpidserver,start,[]),
+  % case lists:member(freshpidserver,registered()) of
+  %   true -> unregister(freshpidserver);
+  %   false -> ok
+  % end,
+  % register(freshpidserver,FreshPidServer),
+  % FreshTimeServer = spawn(freshtimeserver,start,[]),
+  % case lists:member(freshtimeserver,registered()) of
+  %   true -> unregister(freshtimeserver);
+  %   false -> ok
+  % end,
+  % register(freshtimeserver,FreshTimeServer),
+  % FreshVarServer = spawn(freshvarserver,start,[]),
+  % case lists:member(freshvarserver,registered()) of
+  %   true -> unregister(freshvarserver);
+  %   false -> ok
+  % end,
+  % register(freshvarserver,FreshVarServer).
 
 stop_servers() ->
-  fdserver ! terminate,
-  freshpidserver ! terminate,
-  freshtimeserver ! terminate,
-  freshvarserver ! terminate.
+  % fdserver ! terminate,
+  % freshpidserver ! terminate,
+  % freshtimeserver ! terminate,
+  % freshvarserver ! terminate.
+  ref_stop().
 
 eval_opts(System) ->  
   FwdOpts = fwd_sem:eval_opts(System),
@@ -92,6 +98,19 @@ eval_norm_1(System, Steps) ->
       NewSystem = eval_step(System, RandOpt),
       eval_norm_1(NewSystem, Steps + 1)
   end.
+
+ref_add(Id, Ref) ->
+    ets:insert(?APP_REF, {Id, Ref}).
+
+ref_lookup(Id) ->
+    ets:lookup_element(?APP_REF, Id, 2).
+
+ref_start() ->
+    ?APP_REF = ets:new(?APP_REF, [set, public, named_table]),
+    ok.
+
+ref_stop() ->
+    ets:delete(?APP_REF).
 
 % eval(System) ->
 %   FwdOpts = fwd_sem:eval_opts(System),
