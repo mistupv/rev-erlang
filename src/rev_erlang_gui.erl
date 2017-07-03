@@ -7,7 +7,7 @@
 
 setup_gui() ->
   Server = wx:new(),
-  Frame = wxFrame:new(Server, -1, ?APP_STRING,[{size,?FRAME_SIZE_INIT}]),
+  Frame = wxFrame:new(Server, -1, ?APP_STRING, [{size, ?FRAME_SIZE_INIT}]),
   ref_start(),
   ref_add(?FILE_PATH, "."),
   ref_add(?STATUS, #status{}),
@@ -420,6 +420,15 @@ loop() ->
         #wx{id = _RestIds, event = #wxCommand{type = command_text_updated}} ->
           loop();
         %% -------------------- Menu handlers -------------------- %%
+        #wx{id = ?ABOUT, event = #wxCommand{type = command_menu_selected}} ->
+          Caption = "About " ++ ?APP_STRING,
+          Frame = ref_lookup(?FRAME),
+          Dialog = wxMessageDialog:new(Frame, ?INFO_TEXT,
+                                       [{style, ?wxOK},
+                                        {caption, Caption}]),
+          wxDialog:showModal(Dialog),
+          wxWindow:destroy(Dialog),
+          loop();
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
           Frame = ref_lookup(?FRAME),
           openDialog(Frame),

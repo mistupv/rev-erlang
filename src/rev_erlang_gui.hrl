@@ -44,3 +44,5 @@
 -define(PAGEPOS_MANU,  0).
 -define(PAGEPOS_SEMI,  1).
 -define(PAGEPOS_AUTO,  2).
+
+-define(INFO_TEXT, "A reversible semantics for Erlang. More info at: https://github.com/mistupv/rev-erlang").
