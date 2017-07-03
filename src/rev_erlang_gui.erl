@@ -372,7 +372,7 @@ eval_mult(Button) ->
   StepText = wxTextCtrl:getValue(StepTextCtrl),
   case string:to_integer(StepText) of
     {error, _} ->
-      ok;
+      error;
     {Steps, _} ->
       Option =
         case Button of
@@ -409,8 +409,12 @@ loop() ->
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton == ?FORWARD_BUTTON) or (RuleButton == ?BACKWARD_BUTTON) ->
-          {StepsDone, TotalSteps} = eval_mult(RuleButton),
-          utils_gui:sttext_mult(StepsDone, TotalSteps),
+          case eval_mult(RuleButton) of
+            error ->
+              utils_gui:update_status_text(?ERROR_NUM_STEP);
+            {StepsDone, TotalSteps} ->
+              utils_gui:sttext_mult(StepsDone, TotalSteps)
+          end,
           refresh(),
           loop();
         %% -------------------- Text handlers -------------------- %%
