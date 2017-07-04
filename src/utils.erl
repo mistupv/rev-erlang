@@ -197,12 +197,34 @@ stringToFunName(String) ->
 
 stringToCoreArgs([]) ->
   [];
-stringToCoreArgs(Text) ->
-  TextDot = Text ++ ".",
-  {ok, String, _} = erl_scan:string(TextDot),
-  {ok, Exprs} = erl_parse:parse_exprs(String),
+stringToCoreArgs(Str) ->
+  StrDot = Str ++ ".",
+  {ok, ParsedStr, _} = erl_scan:string(StrDot),
+  {ok, Exprs} = erl_parse:parse_exprs(ParsedStr),
   EvalExprs = [element(2,erl_eval:expr(Expr,[])) || Expr <- Exprs],
-  [cerl:abstract(Expr) || Expr <- EvalExprs].
+  StrExprs = tl(lists:droplast(lists:flatten(io_lib:format("~p", ([EvalExprs]))))) ++ ".",
+  {ok, ParsedExprs, _} = erl_scan:string(StrExprs),
+  {ok, TypedExprs} = erl_parse:parse_exprs(ParsedExprs),
+  CoreExprs = [toCore(Expr) || Expr <- TypedExprs],
+  CoreExprs.
+
+toCore(Expr) ->
+  case Expr of
+    {atom, _, Atom} ->
+      cerl:c_atom(Atom);
+    {integer, _, Int} ->
+      cerl:c_int(Int);
+    {float, _, Float} ->
+      cerl:c_float(Float);
+    {string, _, String} ->
+      cerl:c_string(String);
+    {tuple, _, TupleEs} ->
+      cerl:c_tuple_skel([toCore(E) || E <- TupleEs]);
+    {cons, _, Head, Tail} ->
+      cerl:c_cons_skel(toCore(Head), toCore(Tail));
+    {nil, _} ->
+      cerl:c_nil()
+  end.
 
 filter_options([], _) -> [];
 filter_options([CurOpt|RestOpts], Id) ->
