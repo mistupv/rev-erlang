@@ -6,7 +6,7 @@
          replace/3, pp_system/1,
          % opt_to_str/1,str_to_opt/1,
          moduleNames/1,
-         stringToFunName/1,stringToCoreArgs/1,
+         stringToFunName/1,stringToCoreArgs/1, toCore/1,
          filter_options/2, has_fwd/1, has_bwd/1, has_norm/1,
          is_queue_minus_msg/3, topmost_rec/1]).
 

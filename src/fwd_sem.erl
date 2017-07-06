@@ -82,7 +82,6 @@ eval_seq_1(Env,Exp) ->
                                      cerl:let_body(Exp)),
           {NewEnv,NewExp,Label};
         false ->
-          % TODO: Merge envs instead of concat
           LetVars = cerl:let_vars(Exp),
           LetEnv =
             case cerl:let_arity(Exp) of
@@ -119,7 +118,6 @@ eval_seq_1(Env,Exp) ->
               {NewEnv,NewExp,Label};
             false ->
               case CallModule of
-                % TODO: Improve error (othername is not an error!)
                 {c_literal,_,'erlang'} -> 
                   case CallName of
                     {c_literal, _, 'self'} ->
@@ -131,8 +129,17 @@ eval_seq_1(Env,Exp) ->
                       DestPid = lists:nth(1, CallArgs),
                       MsgValue = lists:nth(2, CallArgs),
                       {Env, MsgValue, {send, DestPid, MsgValue}};
-                    _OtherName ->
-                      erlang:error(undef_name)
+                    _OtherCall ->
+                      ConcModule = cerl:concrete(CallModule),
+                      ConcName = cerl:concrete(CallName),
+                      ConcArgs = [cerl:concrete(Arg) || Arg <- CallArgs],
+                      ConcExp = apply(ConcModule, ConcName, ConcArgs),
+                      StrExp = lists:flatten(io_lib:format("~p", ([ConcExp]))) ++ ".",
+                      {ok, ParsedExp, _} = erl_scan:string(StrExp),
+                      {ok, TypedExp} = erl_parse:parse_exprs(ParsedExp),
+                      CoreExp = hd([utils:toCore(Expr) || Expr <- TypedExp]),
+                      NewExp = CoreExp,
+                      {Env, NewExp, tau}
                   end;
                 _OtherModule ->
                   erlang:error(undef_call)
@@ -345,7 +352,7 @@ eval_exp_opt(Exp, Mail) ->
           CallModule = cerl:call_module(Exp),
           CallName = cerl:call_name(Exp),
           case {CallModule, CallName} of
-            {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} -> #opt{rule = ?RULE_SPAWN};
+            {{c_literal, _, 'erlang'}, {c_literal, _, 'spawn'}} -> #opt{rule = ?RULE_SPAWN};
             _Other ->
               CallArgs = cerl:call_args(Exp),
               case is_exp(CallArgs) of
@@ -353,13 +360,13 @@ eval_exp_opt(Exp, Mail) ->
                   eval_exp_list_opt(CallArgs, Mail);
                 false ->
                   case CallModule of
-                    {c_literal,_,'erlang'} ->
+                    {c_literal, _, 'erlang'} ->
                       case CallName of
-                        {c_literal,_,'self'} -> #opt{rule = ?RULE_SELF};
-                        {c_literal,_,'!'} -> #opt{rule = ?RULE_SEND};
-                        _Other -> #opt{rule = ?RULE_SEQ}
+                        {c_literal, _, 'self'} -> #opt{rule = ?RULE_SELF};
+                        {c_literal, _, '!'} -> #opt{rule = ?RULE_SEND};
+                        _OtherCall -> #opt{rule = ?RULE_SEQ}
                       end;
-                    _Other -> #opt{rule = ?RULE_SEQ}
+                    _OtherModule -> #opt{rule = ?RULE_SEQ}
                   end
               end
           end;
