@@ -124,8 +124,8 @@ setupRightSizer(Parent) ->
 
 setupManualPanel(Parent) ->
   ManuPanel = wxPanel:new(Parent),
-  PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Pid:"),
-  PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
+  PidStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Pid/MsgId:"),
+  PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style, ?wxBOTTOM}]),
   ref_add(?PID_TEXT, PidTextCtrl),
 
   ForwardStaticText  = wxStaticText:new(ManuPanel, ?wxID_ANY, "Available forward rules: "),
@@ -143,8 +143,8 @@ setupManualPanel(Parent) ->
   wxSizer:addSpacer(ManuSizer, 15),
   wxSizer:add(ManuSizer, ButtonSizer),
 
-  wxSizer:add(ProcSizer, PidStaticText, [{flag,?wxCENTRE}]),
-  wxSizer:add(ProcSizer, PidTextCtrl, [{flag,?wxCENTRE}]),
+  wxSizer:add(ProcSizer, PidStaticText, [{flag, ?wxCENTRE}]),
+  wxSizer:add(ProcSizer, PidTextCtrl, [{flag, ?wxCENTRE}]),
   
   wxSizer:add(ButtonSizer, ForwardStaticText),
   addButtonsToSizer(ButtonSizer, ForwardButtons),
