@@ -45,10 +45,11 @@ eval_seq_1(Env,Exp) ->
         false ->
           FunDefs = ref_lookup(?FUN_DEFS),
           FunDef = utils:fundef_lookup(ApplyOp, FunDefs),
-          FunBody = cerl:fun_body(FunDef),
-          FunArgs = cerl:fun_vars(FunDef),
+          NewFunDef = utils:fundef_rename(FunDef),
+          FunBody = cerl:fun_body(NewFunDef),
+          FunArgs = cerl:fun_vars(NewFunDef),
           % standard zip is used here (pretty-printer forces it)
-          NewEnv = lists:zip(FunArgs,ApplyArgs),
+          NewEnv = utils:merge_env(Env, lists:zip(FunArgs,ApplyArgs)),
           {NewEnv,FunBody,tau}
       end;
     'case' ->

@@ -1,5 +1,5 @@
 -module(utils).
--export([fundef_lookup/2, build_var/1,
+-export([fundef_lookup/2, fundef_rename/1, build_var/1,
          select_proc/2, select_msg/2, select_proc_with_time/2,
          list_from_core/1,
          update_env/2, merge_env/2,
@@ -15,6 +15,42 @@
 fundef_lookup(FunName, FunDefs) ->
   {_, FunDef} = lists:keyfind(FunName, 1, FunDefs),
   FunDef.
+
+fundef_rename(FunDef) ->
+  FunVars = cerl:fun_vars(FunDef),
+  FunBody = cerl:fun_body(FunDef),
+  RenamedVars = pars_rename(FunVars),
+  {RenamedExp, _} =
+    cerl_trees:mapfold(fun (Exp, Acc) ->
+                          case cerl:type(Exp) of
+                            var ->
+                              case cerl:var_name(Exp) of
+                                {_FunName, _FunArity} ->
+                                  NewExp = Exp,
+                                  NewAcc = Acc;
+                              _OtherName ->
+                                case lists:keyfind(Exp, 1, Acc) of
+                                  false ->
+                                    NewExp = fresh_var(),
+                                    NewAcc = [{Exp,NewExp}] ++ Acc;
+                                  {Exp, NewVar} ->
+                                    NewExp = NewVar,
+                                    NewAcc = Acc
+                                end
+                              end;
+                            _Other ->
+                              NewExp = Exp,
+                              NewAcc = Acc
+                          end,
+                          {NewExp, NewAcc}
+                        end,
+                        RenamedVars,
+                        FunBody),
+  NewFunDef = cerl:c_fun([NewVar || {_, NewVar} <- RenamedVars], RenamedExp),
+  NewFunDef.
+
+pars_rename(Vars) ->
+  [{Var, fresh_var()} || Var <- Vars].
 
 build_var(Num) ->
   NumAtom = list_to_atom("y_" ++ integer_to_list(Num)),
@@ -262,3 +298,14 @@ topmost_rec([CurHist|RestHist]) ->
     {rec,_,_,_,_} -> CurHist;
     _Other -> topmost_rec(RestHist)
   end.
+
+fresh_var() ->
+  VarNum = ref_lookup(?FRESH_VAR),
+  ref_add(?FRESH_VAR, VarNum + 1),
+  utils:build_var(VarNum).
+
+ref_add(Id, Ref) ->
+    ets:insert(?APP_REF, {Id, Ref}).
+
+ref_lookup(Id) ->
+    ets:lookup_element(?APP_REF, Id, 2).
