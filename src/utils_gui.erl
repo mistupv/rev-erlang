@@ -59,22 +59,35 @@ button_to_option(Button) ->
   end.
 
 option_to_button(Option) ->
-  case Option of
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SEQ} ->     ?FORW_SEQ_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_CHECK} ->   ?FORW_CHECK_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SEND} ->    ?FORW_SEND_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_RECEIVE} -> ?FORW_RECEIVE_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SPAWN} ->   ?FORW_SPAWN_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SELF} ->    ?FORW_SELF_BUTTON;
-    #opt{sem = ?FWD_SEM, rule = ?RULE_SCHED} ->   ?FORW_SCHED_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SEQ} ->     ?BACK_SEQ_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_CHECK} ->   ?BACK_CHECK_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SEND} ->    ?BACK_SEND_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_RECEIVE} -> ?BACK_RECEIVE_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SPAWN} ->   ?BACK_SPAWN_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SELF} ->    ?BACK_SELF_BUTTON;
-    #opt{sem = ?BWD_SEM, rule = ?RULE_SCHED} ->   ?BACK_SCHED_BUTTON
+  #opt{sem = Sem, type = Type} = Option,
+  case Sem of
+    ?FWD_SEM ->
+      case Type of
+        ?TYPE_MSG  -> ?FORW_SCH_BUTTON;
+        ?TYPE_PROC -> ?FORW_INT_BUTTON
+      end;
+    ?BWD_SEM ->
+      case Type of
+        ?TYPE_MSG  -> ?BACK_SCH_BUTTON;
+        ?TYPE_PROC -> ?BACK_INT_BUTTON
+      end
   end.
+  % case Option of
+  %    ->     ?FORW_SEQ_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_CHECK} ->   ?FORW_CHECK_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SEND} ->    ?FORW_SEND_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_RECEIVE} -> ?FORW_RECEIVE_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SPAWN} ->   ?FORW_SPAWN_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SELF} ->    ?FORW_SELF_BUTTON;
+  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SCHED} ->   ?FORW_SCHED_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SEQ} ->     ?BACK_SEQ_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_CHECK} ->   ?BACK_CHECK_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SEND} ->    ?BACK_SEND_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_RECEIVE} -> ?BACK_RECEIVE_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SPAWN} ->   ?BACK_SPAWN_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SELF} ->    ?BACK_SELF_BUTTON;
+  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SCHED} ->   ?BACK_SCHED_BUTTON
+  % end.
 
 disable_rule_buttons(Buttons) ->
   [wxButton:disable(ref_lookup(Button)) || Button <- Buttons].
