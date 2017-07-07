@@ -128,14 +128,25 @@ setupManualPanel(Parent) ->
   PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style, ?wxBOTTOM}]),
   ref_add(?PID_TEXT, PidTextCtrl),
 
-  ForwardStaticText  = wxStaticText:new(ManuPanel, ?wxID_ANY, "Available forward rules: "),
-  BackwardStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Available backward rules: "),
+  ForwardStaticText  = wxStaticText:new(ManuPanel, ?wxID_ANY, "Forward rules "),
+  BackwardStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Backward rules "),
 
-  ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
-  BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
+  ForwIntButton = wxButton:new(ManuPanel, ?FORW_INT_BUTTON,
+                               [{label, "Internal"}]),
+  ForwSchButton = wxButton:new(ManuPanel, ?FORW_SCH_BUTTON,
+                                [{label, "Sched"}]),
+  BackIntButton = wxButton:new(ManuPanel, ?BACK_INT_BUTTON,
+                               [{label, "Internal"}]),
+  BackSchButton = wxButton:new(ManuPanel, ?BACK_SCH_BUTTON,
+                                [{label, "Sched"}]),
+
+  % ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
+  % BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
 
   ManuSizer = wxBoxSizer:new(?wxVERTICAL),
   ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ForwardSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  BackwardSizer = wxBoxSizer:new(?wxHORIZONTAL),
   ButtonSizer = wxBoxSizer:new(?wxVERTICAL),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
@@ -146,13 +157,23 @@ setupManualPanel(Parent) ->
   wxSizer:add(ProcSizer, PidStaticText, [{flag, ?wxCENTRE}]),
   wxSizer:add(ProcSizer, PidTextCtrl, [{flag, ?wxCENTRE}]),
   
-  wxSizer:add(ButtonSizer, ForwardStaticText),
-  addButtonsToSizer(ButtonSizer, ForwardButtons),
-  wxSizer:addSpacer(ButtonSizer, 15),
-  wxSizer:add(ButtonSizer, BackwardStaticText),
-  addButtonsToSizer(ButtonSizer, BackwardButtons),
+  wxSizer:add(ForwardSizer, ForwIntButton),
+  wxSizer:addSpacer(ForwardSizer, 5),
+  wxSizer:add(ForwardSizer, ForwSchButton),
+  wxSizer:add(BackwardSizer, BackIntButton),
+  wxSizer:addSpacer(BackwardSizer, 5),
+  wxSizer:add(BackwardSizer, BackSchButton),
 
-  wxSizer:add(BorderSizer, ManuSizer, [{flag, ?wxALL}, {border, 10}]),
+  wxSizer:add(ButtonSizer, ForwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+  wxSizer:addSpacer(ButtonSizer, 5),
+  wxSizer:add(ButtonSizer, ForwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+  % addButtonsToSizer(ButtonSizer, ForwardSizer),
+  wxSizer:addSpacer(ButtonSizer, 10),
+  wxSizer:add(ButtonSizer, BackwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+  % addButtonsToSizer(ButtonSizer, BackwardSizer),
+  wxSizer:add(ButtonSizer, BackwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+
+  wxSizer:add(BorderSizer, ManuSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),
   wxWindow:setSizer(ManuPanel, BorderSizer),
   ManuPanel.
 
@@ -206,31 +227,31 @@ setupAutoPanel(Parent) ->
   wxWindow:setSizer(AutoPanel, BorderSizer),
   AutoPanel.
 
-addButtonsToSizer(Sizer,Buttons) ->
-  FirstRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  SecondRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  LastRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
+% addButtonsToSizer(Sizer,Buttons) ->
+%   FirstRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
+%   SecondRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
+%   LastRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
 
-  FirstRowButtons = lists:sublist(Buttons,1,3),
-  SecondRowButtons = lists:sublist(Buttons,4,3),
-  LastRowButtons = lists:sublist(Buttons,7,3),
+%   FirstRowButtons = lists:sublist(Buttons,1,3),
+%   SecondRowButtons = lists:sublist(Buttons,4,3),
+%   LastRowButtons = lists:sublist(Buttons,7,3),
 
-  [wxSizer:add(FirstRowSizer,Button) || Button <- FirstRowButtons],
-  [wxSizer:add(SecondRowSizer,Button) || Button <- SecondRowButtons],
-  [wxSizer:add(LastRowSizer,Button) || Button <- LastRowButtons],
+%   [wxSizer:add(FirstRowSizer,Button) || Button <- FirstRowButtons],
+%   [wxSizer:add(SecondRowSizer,Button) || Button <- SecondRowButtons],
+%   [wxSizer:add(LastRowSizer,Button) || Button <- LastRowButtons],
 
-  wxSizer:add(Sizer,FirstRowSizer),
-  wxSizer:add(Sizer,SecondRowSizer),
-  wxSizer:add(Sizer,LastRowSizer).
+%   wxSizer:add(Sizer,FirstRowSizer),
+%   wxSizer:add(Sizer,SecondRowSizer),
+%   wxSizer:add(Sizer,LastRowSizer).
 
-setupRuleButtons(Parent,First,Last) ->
-  Refs = lists:seq(First,Last),
-  RuleButtons = [wxButton:new(Parent, Ref,
-                [{label, utils_gui:get_button_label(Ref)}]) || Ref <- Refs],
-  RuleRefPairs = lists:zip(RuleButtons,Refs),
-  [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
-  utils_gui:disable_rule_buttons(Refs),
-  RuleButtons.
+% setupRuleButtons(Parent,First,Last) ->
+%   Refs = lists:seq(First,Last),
+%   RuleButtons = [wxButton:new(Parent, Ref,
+%                 [{label, utils_gui:get_button_label(Ref)}]) || Ref <- Refs],
+%   RuleRefPairs = lists:zip(RuleButtons,Refs),
+%   [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
+%   utils_gui:disable_rule_buttons(Refs),
+%   RuleButtons.
 
 setupMenu() ->
   MenuBar = wxMenuBar:new(),
@@ -312,7 +333,7 @@ start(Fun,Args) ->
 refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
-  ManualButtons = lists:seq(?FORW_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
+  ManualButtons = lists:seq(?FORW_INT_BUTTON, ?BACK_SCH_BUTTON),
   ?LOG("full options: " ++ ?TO_STRING(Options)),
   case string:to_integer(PidText) of
     {error, _} ->
@@ -410,7 +431,7 @@ loop() ->
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
-          when (RuleButton >= ?FORW_SEQ_BUTTON) and (RuleButton =< ?BACK_SCHED_BUTTON) ->
+          when (RuleButton >= ?FORW_INT_BUTTON) and (RuleButton =< ?BACK_SCH_BUTTON) ->
           exec_with(RuleButton),
           utils_gui:sttext_single(RuleButton),
           refresh(),
