@@ -31,7 +31,9 @@ eval_seq_1(Env,Exp) ->
       end,
       {NewEnv,NewExp,Label};
     tuple ->
-      eval_list(Env,cerl:tuples_es(Exp));
+      {NewEnv, NewTupleEs, Label} = eval_list(Env,cerl:tuple_es(Exp)),
+      NewExp = cerl:c_tuple(NewTupleEs),
+      {NewEnv, NewExp, Label};
     apply -> 
       ApplyArgs = cerl:apply_args(Exp),
       ApplyOp = cerl:apply_op(Exp),
@@ -172,7 +174,6 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
   #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail} = Proc,
   {NewEnv, NewExp, Label} = eval_seq(Env, Exp),
   NewSystem = 
-    % Labels can contain more or less information than in the papers
     case Label of
       tau ->
         NewProc = Proc#proc{hist = [{tau,Env,Exp}|Hist], env = NewEnv, exp = NewExp},
@@ -200,8 +201,6 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         RepExp = utils:replace(Var, SpawnPid, NewExp),
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
         #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
-        % TODO: Put 'rec' hist here
-        % TODO: Update rec label up to current version of semantics
       {rec, Var, ReceiveClauses} ->
         {Bindings, RecExp, ConsMsg, NewMail} = matchrec(ReceiveClauses, Mail),
         UpdatedEnv = utils:merge_env(NewEnv, Bindings),
