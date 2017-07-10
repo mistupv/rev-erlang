@@ -8,24 +8,11 @@
 -define(OPEN,  ?wxID_OPEN).
 
 -define(START_BUTTON,        400).
-% -define(FORW_SEQ_BUTTON,     401).
-% -define(FORW_CHECK_BUTTON,   402).
-% -define(FORW_SEND_BUTTON,    403).
-% -define(FORW_RECEIVE_BUTTON, 404).
-% -define(FORW_SPAWN_BUTTON,   405).
-% -define(FORW_SELF_BUTTON,    406).
-% -define(FORW_SCHED_BUTTON,   407).
-% -define(BACK_SEQ_BUTTON,     408).
-% -define(BACK_CHECK_BUTTON,   409).
-% -define(BACK_SEND_BUTTON,    410).
-% -define(BACK_RECEIVE_BUTTON, 411).
-% -define(BACK_SPAWN_BUTTON,   412).
-% -define(BACK_SELF_BUTTON,    413).
-% -define(BACK_SCHED_BUTTON,   414).
--define(FORW_INT_BUTTON,     401).
--define(FORW_SCH_BUTTON,     402).
--define(BACK_INT_BUTTON,     403).
--define(BACK_SCH_BUTTON,     404).
+
+-define(FORW_INT_BUTTON,     410).
+-define(FORW_SCH_BUTTON,     411).
+-define(BACK_INT_BUTTON,     412).
+-define(BACK_SCH_BUTTON,     413).
 
 -define(FORWARD_BUTTON,      422).
 -define(BACKWARD_BUTTON,     423).
@@ -49,6 +36,8 @@
 -define(PAGEPOS_MANU,  0).
 -define(PAGEPOS_SEMI,  1).
 -define(PAGEPOS_AUTO,  2).
+
+-define(NULL_LABEL, null_label).
 
 -define(INFO_TEXT, "A reversible semantics for Erlang. More info at: https://github.com/mistupv/rev-erlang").
 -define(ERROR_NUM_STEP, "The number of steps is not correct.").
