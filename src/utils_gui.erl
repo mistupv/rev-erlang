@@ -125,7 +125,12 @@ sttext_single(Button) ->
       ?FWD_SEM -> " forward ";
       ?BWD_SEM -> " backward "
     end,
-  LabelStr = get_label_from_option(Option),
+  Label = get_label_from_option(Option),
+  LabelStr =
+    case Label of
+      ?NULL_LABEL -> "Sched";
+      _Other -> Label
+    end,
   FullStr = "Fired" ++ SemStr ++ LabelStr ++ " rule",
   update_status_text(FullStr).
 
