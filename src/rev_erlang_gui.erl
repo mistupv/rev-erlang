@@ -8,6 +8,8 @@
 setup_gui() ->
   Server = wx:new(),
   Frame = wxFrame:new(Server, -1, ?APP_STRING, [{size, ?FRAME_SIZE_INIT}]),
+  % wxFrame:setMinSize(Frame, ?FRAME_SIZE_MIN),
+  % wxFrame:setMaxSize(Frame, ?FRAME_SIZE_MAX),
   ref_start(),
   ref_add(?FILE_PATH, "."),
   ref_add(?STATUS, #status{}),
@@ -174,6 +176,7 @@ setupManualPanel(Parent) ->
   wxSizer:add(ButtonSizer, ForwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
   wxSizer:addSpacer(ButtonSizer, 10),
   wxSizer:add(ButtonSizer, BackwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
+  wxSizer:addSpacer(ButtonSizer, 5),
   wxSizer:add(ButtonSizer, BackwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
   wxSizer:add(BorderSizer, ManuSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),

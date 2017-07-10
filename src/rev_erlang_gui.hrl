@@ -1,7 +1,9 @@
 -record(status, {loaded  = false,
                  running = false}).
 
--define(FRAME_SIZE_INIT, {800, 600}).
+-define(FRAME_SIZE_INIT, {750, 600}).
+-define(FRAME_SIZE_MIN,  {750, 600}).
+-define(FRAME_SIZE_MAX,  {750, 600}).
 
 -define(ABOUT, ?wxID_ABOUT).
 -define(EXIT,  ?wxID_EXIT).
