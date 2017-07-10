@@ -132,11 +132,11 @@ setupManualPanel(Parent) ->
   BackwardStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Backward rules "),
 
   ForwIntButton = wxButton:new(ManuPanel, ?FORW_INT_BUTTON,
-                               [{label, "Internal"}]),
+                               [{label, "Seq"}]),
   ForwSchButton = wxButton:new(ManuPanel, ?FORW_SCH_BUTTON,
                                 [{label, "Sched"}]),
   BackIntButton = wxButton:new(ManuPanel, ?BACK_INT_BUTTON,
-                               [{label, "Internal"}]),
+                               [{label, "Seq"}]),
   BackSchButton = wxButton:new(ManuPanel, ?BACK_SCH_BUTTON,
                                 [{label, "Sched"}]),
   wxButton:disable(ForwIntButton),
@@ -348,8 +348,8 @@ refresh_buttons(Options) ->
       utils_gui:disable_rule_buttons(ManualButtons);
     {PidInt, _} ->
       FiltOpts = utils:filter_options(Options, PidInt),
-      FiltButtons = lists:map(fun utils_gui:option_to_button/1, FiltOpts),
-      [utils_gui:set_button_if(Button, FiltButtons) ||
+      FiltButtons = lists:map(fun utils_gui:option_to_button_label/1, FiltOpts),
+      [utils_gui:set_button_label_if(Button, FiltButtons) ||
                                Button <- ManualButtons]
   end,
   HasFwdOptions = utils:has_fwd(Options),

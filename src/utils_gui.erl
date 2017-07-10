@@ -1,7 +1,7 @@
 -module(utils_gui).
 -export([is_app_loaded/0, is_app_running/0,
-         get_button_label/1, option_to_button/1, button_to_option/1,
-         disable_rule_buttons/1, set_button_if/2, set_ref_button_if/2,
+         option_to_button_label/1, button_to_option/1,
+         disable_rule_buttons/1, set_button_label_if/2, set_ref_button_if/2,
          set_choices/1, stop_refs/0, update_status_text/1,
          sttext_single/1, sttext_mult/2, sttext_norm/1]).
 
@@ -22,80 +22,77 @@ is_app_running() ->
   #status{running = RunningStatus} = Status,
   RunningStatus.
 
-get_button_label(Button) ->
-  case Button of
-    ?FORW_SEQ_BUTTON ->     "Seq";
-    ?FORW_CHECK_BUTTON ->   "Check";
-    ?FORW_SEND_BUTTON ->    "Send";
-    ?FORW_RECEIVE_BUTTON -> "Receive";
-    ?FORW_SPAWN_BUTTON ->   "Spawn";
-    ?FORW_SELF_BUTTON ->    "Self";
-    ?FORW_SCHED_BUTTON ->   "Sched";
-    ?BACK_SEQ_BUTTON ->     "Seq";
-    ?BACK_CHECK_BUTTON ->   "Check";
-    ?BACK_SEND_BUTTON ->    "Send";
-    ?BACK_RECEIVE_BUTTON -> "Receive";
-    ?BACK_SPAWN_BUTTON ->   "Spawn";
-    ?BACK_SELF_BUTTON ->    "Self";
-    ?BACK_SCHED_BUTTON ->   "Sched"
+get_label(Option) ->
+  case Option of
+    #opt{rule = ?RULE_SEQ}     -> "Seq";
+    #opt{rule = ?RULE_SEND}    -> "Send";
+    #opt{rule = ?RULE_RECEIVE} -> "Receive";
+    #opt{rule = ?RULE_SPAWN}   -> "Spawn";
+    #opt{rule = ?RULE_SELF}    -> "Self";
+    #opt{rule = ?RULE_SCHED}   -> ?NULL_LABEL
+  end.
+
+  get_rule(Button) ->
+  Label = wxButton:getLabel(ref_lookup(Button)),
+  case Label of
+     "Seq"     -> ?RULE_SEQ;
+     "Send"    -> ?RULE_SEND;
+     "Receive" -> ?RULE_RECEIVE;
+     "Spawn"   -> ?RULE_SPAWN;
+     "Self"    -> ?RULE_SELF
   end.
 
 button_to_option(Button) ->
   case Button of
-    ?FORW_SEQ_BUTTON     -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEQ};
-    ?FORW_CHECK_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_CHECK};
-    ?FORW_SEND_BUTTON    -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEND};
-    ?FORW_RECEIVE_BUTTON -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_RECEIVE};
-    ?FORW_SPAWN_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SPAWN};
-    ?FORW_SELF_BUTTON    -> #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SELF};
-    ?FORW_SCHED_BUTTON   -> #opt{sem = ?FWD_SEM, type = ?TYPE_MSG,  rule = ?RULE_SCHED};
-    ?BACK_SEQ_BUTTON     -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEQ};
-    ?BACK_CHECK_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_CHECK};
-    ?BACK_SEND_BUTTON    -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SEND};
-    ?BACK_RECEIVE_BUTTON -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_RECEIVE};
-    ?BACK_SPAWN_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SPAWN};
-    ?BACK_SELF_BUTTON    -> #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = ?RULE_SELF};
-    ?BACK_SCHED_BUTTON   -> #opt{sem = ?BWD_SEM, type = ?TYPE_MSG,  rule = ?RULE_SCHED}
+    ?FORW_INT_BUTTON ->
+      Rule = get_rule(Button),
+      #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = Rule};
+    ?FORW_SCH_BUTTON ->
+      #opt{sem = ?FWD_SEM, type = ?TYPE_MSG, rule = ?RULE_SCHED};
+    ?BACK_INT_BUTTON ->
+      Rule = get_rule(Button),
+      #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = Rule};
+    ?BACK_SCH_BUTTON ->
+      #opt{sem = ?BWD_SEM, type = ?TYPE_MSG}
   end.
 
-option_to_button(Option) ->
+option_to_button_label(Option) ->
   #opt{sem = Sem, type = Type} = Option,
-  case Sem of
-    ?FWD_SEM ->
-      case Type of
-        ?TYPE_MSG  -> ?FORW_SCH_BUTTON;
-        ?TYPE_PROC -> ?FORW_INT_BUTTON
-      end;
-    ?BWD_SEM ->
-      case Type of
-        ?TYPE_MSG  -> ?BACK_SCH_BUTTON;
-        ?TYPE_PROC -> ?BACK_INT_BUTTON
-      end
-  end.
-  % case Option of
-  %    ->     ?FORW_SEQ_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_CHECK} ->   ?FORW_CHECK_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SEND} ->    ?FORW_SEND_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_RECEIVE} -> ?FORW_RECEIVE_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SPAWN} ->   ?FORW_SPAWN_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SELF} ->    ?FORW_SELF_BUTTON;
-  %   #opt{sem = ?FWD_SEM, rule = ?RULE_SCHED} ->   ?FORW_SCHED_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SEQ} ->     ?BACK_SEQ_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_CHECK} ->   ?BACK_CHECK_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SEND} ->    ?BACK_SEND_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_RECEIVE} -> ?BACK_RECEIVE_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SPAWN} ->   ?BACK_SPAWN_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SELF} ->    ?BACK_SELF_BUTTON;
-  %   #opt{sem = ?BWD_SEM, rule = ?RULE_SCHED} ->   ?BACK_SCHED_BUTTON
-  % end.
+  Label = get_label(Option),
+  Button =
+    case Sem of
+      ?FWD_SEM ->
+        case Type of
+          ?TYPE_MSG  -> ?FORW_SCH_BUTTON;
+          ?TYPE_PROC -> ?FORW_INT_BUTTON
+        end;
+      ?BWD_SEM ->
+        case Type of
+          ?TYPE_MSG  -> ?BACK_SCH_BUTTON;
+          ?TYPE_PROC -> ?BACK_INT_BUTTON
+        end
+    end,
+  {Button, Label}.
 
 disable_rule_buttons(Buttons) ->
   [wxButton:disable(ref_lookup(Button)) || Button <- Buttons].
 
-set_button_if(Button, EnabledButtons) ->
-  case lists:member(Button, EnabledButtons) of
-    true -> wxButton:enable(ref_lookup(Button));
-    false -> wxButton:disable(ref_lookup(Button))
+set_button_label_if(Button, EnabledButtonLabels) ->
+  RefButton = ref_lookup(Button),
+  case lists:keyfind(Button, 1, EnabledButtonLabels) of
+    false ->
+      wxButton:disable(RefButton),
+      case Button of
+        ?FORW_INT_BUTTON -> wxButton:setLabel(RefButton, "Seq");
+        ?BACK_INT_BUTTON -> wxButton:setLabel(RefButton, "Seq");
+        _Other -> ok
+      end;
+    {Button, Label} ->
+      wxButton:enable(RefButton),
+      case Label of
+        ?NULL_LABEL -> ok;
+        Label -> wxButton:setLabel(RefButton, Label)
+      end
   end.
 
 set_ref_button_if(Ref, Cond) ->
@@ -127,7 +124,7 @@ sttext_single(Button) ->
     ?FWD_SEM -> " forward ";
     ?BWD_SEM -> " backward "
   end,
-  LabelStr = get_button_label(Button),
+  LabelStr = "",%get_button_label(Button),
   FullStr = "Fired" ++ SemStr ++ LabelStr ++ " rule",
   update_status_text(FullStr).
 
