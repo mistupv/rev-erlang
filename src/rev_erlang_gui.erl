@@ -130,9 +130,6 @@ setupManualPanel(Parent) ->
   PidTextCtrl = wxTextCtrl:new(ManuPanel, ?PID_TEXT, [{style, ?wxBOTTOM}]),
   ref_add(?PID_TEXT, PidTextCtrl),
 
-  ForwardStaticText  = wxStaticText:new(ManuPanel, ?wxID_ANY, "Forward rules "),
-  BackwardStaticText = wxStaticText:new(ManuPanel, ?wxID_ANY, "Backward rules "),
-
   ForwIntButton = wxButton:new(ManuPanel, ?FORW_INT_BUTTON,
                                [{label, "Seq"}]),
   ForwSchButton = wxButton:new(ManuPanel, ?FORW_SCH_BUTTON,
@@ -152,13 +149,15 @@ setupManualPanel(Parent) ->
 
   ManuSizer = wxBoxSizer:new(?wxVERTICAL),
   ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  ForwardSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  BackwardSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ForwardSizer = wxStaticBoxSizer:new(?wxHORIZONTAL, ManuPanel,
+                                      [{label, "Forward rules"}]),
+  BackwardSizer = wxStaticBoxSizer:new(?wxHORIZONTAL, ManuPanel,
+                                      [{label, "Backward rules"}]),
   ButtonSizer = wxBoxSizer:new(?wxVERTICAL),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
   wxSizer:add(ManuSizer, ProcSizer),
-  wxSizer:addSpacer(ManuSizer, 15),
+  wxSizer:addSpacer(ManuSizer, 10),
   wxSizer:add(ManuSizer, ButtonSizer),
 
   wxSizer:add(ProcSizer, PidStaticText, [{flag, ?wxCENTRE}]),
@@ -171,11 +170,7 @@ setupManualPanel(Parent) ->
   wxSizer:addSpacer(BackwardSizer, 5),
   wxSizer:add(BackwardSizer, BackSchButton),
 
-  wxSizer:add(ButtonSizer, ForwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  wxSizer:addSpacer(ButtonSizer, 5),
   wxSizer:add(ButtonSizer, ForwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  wxSizer:addSpacer(ButtonSizer, 10),
-  wxSizer:add(ButtonSizer, BackwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
   wxSizer:addSpacer(ButtonSizer, 5),
   wxSizer:add(ButtonSizer, BackwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
