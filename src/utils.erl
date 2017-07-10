@@ -124,7 +124,7 @@ pp_msgs(Msgs) ->
 
 pp_procs(Procs) ->
   ProcsList = [pp_proc(Proc) || Proc <- Procs],
-  string:join(ProcsList," &\n").
+  string:join(ProcsList," |\n").
 
 pp_msg(#msg{dest = DestPid, val = MsgValue, time = Time}) ->
   ["(",
