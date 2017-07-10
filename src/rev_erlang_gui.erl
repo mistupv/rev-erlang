@@ -148,9 +148,6 @@ setupManualPanel(Parent) ->
   ref_add(?BACK_INT_BUTTON, BackIntButton),
   ref_add(?BACK_SCH_BUTTON, BackSchButton),
 
-  % ForwardButtons = setupRuleButtons(ManuPanel, ?FORW_SEQ_BUTTON, ?FORW_SCHED_BUTTON),
-  % BackwardButtons = setupRuleButtons(ManuPanel, ?BACK_SEQ_BUTTON, ?BACK_SCHED_BUTTON),
-
   ManuSizer = wxBoxSizer:new(?wxVERTICAL),
   ProcSizer = wxBoxSizer:new(?wxHORIZONTAL),
   ForwardSizer = wxBoxSizer:new(?wxHORIZONTAL),
@@ -175,10 +172,8 @@ setupManualPanel(Parent) ->
   wxSizer:add(ButtonSizer, ForwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
   wxSizer:addSpacer(ButtonSizer, 5),
   wxSizer:add(ButtonSizer, ForwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  % addButtonsToSizer(ButtonSizer, ForwardSizer),
   wxSizer:addSpacer(ButtonSizer, 10),
   wxSizer:add(ButtonSizer, BackwardStaticText, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  % addButtonsToSizer(ButtonSizer, BackwardSizer),
   wxSizer:add(ButtonSizer, BackwardSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
   wxSizer:add(BorderSizer, ManuSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),
@@ -234,32 +229,6 @@ setupAutoPanel(Parent) ->
   wxSizer:add(BorderSizer, AutoSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),
   wxWindow:setSizer(AutoPanel, BorderSizer),
   AutoPanel.
-
-% addButtonsToSizer(Sizer,Buttons) ->
-%   FirstRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
-%   SecondRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
-%   LastRowSizer = wxBoxSizer:new(?wxHORIZONTAL),
-
-%   FirstRowButtons = lists:sublist(Buttons,1,3),
-%   SecondRowButtons = lists:sublist(Buttons,4,3),
-%   LastRowButtons = lists:sublist(Buttons,7,3),
-
-%   [wxSizer:add(FirstRowSizer,Button) || Button <- FirstRowButtons],
-%   [wxSizer:add(SecondRowSizer,Button) || Button <- SecondRowButtons],
-%   [wxSizer:add(LastRowSizer,Button) || Button <- LastRowButtons],
-
-%   wxSizer:add(Sizer,FirstRowSizer),
-%   wxSizer:add(Sizer,SecondRowSizer),
-%   wxSizer:add(Sizer,LastRowSizer).
-
-% setupRuleButtons(Parent,First,Last) ->
-%   Refs = lists:seq(First,Last),
-%   RuleButtons = [wxButton:new(Parent, Ref,
-%                 [{label, utils_gui:get_button_label(Ref)}]) || Ref <- Refs],
-%   RuleRefPairs = lists:zip(RuleButtons,Refs),
-%   [ref_add(Ref, Button) || {Button, Ref} <- RuleRefPairs],
-%   utils_gui:disable_rule_buttons(Refs),
-%   RuleButtons.
 
 setupMenu() ->
   MenuBar = wxMenuBar:new(),

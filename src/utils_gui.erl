@@ -22,7 +22,7 @@ is_app_running() ->
   #status{running = RunningStatus} = Status,
   RunningStatus.
 
-get_label(Option) ->
+get_label_from_option(Option) ->
   case Option of
     #opt{rule = ?RULE_SEQ}     -> "Seq";
     #opt{rule = ?RULE_SEND}    -> "Send";
@@ -32,7 +32,7 @@ get_label(Option) ->
     #opt{rule = ?RULE_SCHED}   -> ?NULL_LABEL
   end.
 
-  get_rule(Button) ->
+get_rule_from_button(Button) ->
   Label = wxButton:getLabel(ref_lookup(Button)),
   case Label of
      "Seq"     -> ?RULE_SEQ;
@@ -45,12 +45,12 @@ get_label(Option) ->
 button_to_option(Button) ->
   case Button of
     ?FORW_INT_BUTTON ->
-      Rule = get_rule(Button),
+      Rule = get_rule_from_button(Button),
       #opt{sem = ?FWD_SEM, type = ?TYPE_PROC, rule = Rule};
     ?FORW_SCH_BUTTON ->
       #opt{sem = ?FWD_SEM, type = ?TYPE_MSG, rule = ?RULE_SCHED};
     ?BACK_INT_BUTTON ->
-      Rule = get_rule(Button),
+      Rule = get_rule_from_button(Button),
       #opt{sem = ?BWD_SEM, type = ?TYPE_PROC, rule = Rule};
     ?BACK_SCH_BUTTON ->
       #opt{sem = ?BWD_SEM, type = ?TYPE_MSG}
@@ -58,7 +58,7 @@ button_to_option(Button) ->
 
 option_to_button_label(Option) ->
   #opt{sem = Sem, type = Type} = Option,
-  Label = get_label(Option),
+  Label = get_label_from_option(Option),
   Button =
     case Sem of
       ?FWD_SEM ->
@@ -118,13 +118,14 @@ stop_refs() ->
   end.
 
 sttext_single(Button) ->
-  #opt{sem = Sem} = button_to_option(Button),
+  Option = button_to_option(Button),
+  #opt{sem = Sem} = Option,
   SemStr =
-  case Sem of
-    ?FWD_SEM -> " forward ";
-    ?BWD_SEM -> " backward "
-  end,
-  LabelStr = "",%get_button_label(Button),
+    case Sem of
+      ?FWD_SEM -> " forward ";
+      ?BWD_SEM -> " backward "
+    end,
+  LabelStr = get_label_from_option(Option),
   FullStr = "Fired" ++ SemStr ++ LabelStr ++ " rule",
   update_status_text(FullStr).
 
