@@ -1,5 +1,28 @@
+%%%---------------------------------------------------------------------
+%%% Description module bwd_sem
+%%%---------------------------------------------------------------------
+%%% Some functions that implement the backward (reversible) semantics
+%%% for Erlang. These can be divided into:
+%%%   * Functions to get the evaluation options (*opts)
+%%%   * Functions to perform the evaluation
+%%%---------------------------------------------------------------------
+%%% Exports
+%%%---------------------------------------------------------------------
+%%% eval_step(System, Pid) ->
+%%%   performs an evaluation step in process Pid, given System
+%%%   returns the new System
+%%%
+%%% eval_sched(System, Id) ->
+%%%   performs an evaluation step in message Id, given System
+%%%   returns the new System
+%%%
+%%% eval_opts(System) ->
+%%%   gets the evaluation options for a given System
+%%%   returns the options
+%%%---------------------------------------------------------------------
+
 -module(bwd_sem).
--export([eval_step/2,eval_sched/2,eval_opts/1]).
+-export([eval_step/2, eval_sched/2, eval_opts/1]).
 
 -include("rev_erlang.hrl").
 

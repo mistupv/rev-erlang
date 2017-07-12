@@ -1,6 +1,39 @@
+%%%---------------------------------------------------------------------
+%%% Description module rev_erlang
+%%%---------------------------------------------------------------------
+%%% The main module for the rev-erlang project.
+%%% This module includes functions for starting the application
+%%% and interact with the reversible semantics for Erlang
+%%%---------------------------------------------------------------------
+%%% Exports
+%%%---------------------------------------------------------------------
+%%% start() ->
+%%%   starts the GUI
+%%%
+%%% start_refs(FunDefs) ->
+%%%   starts the ETS servers and initializes them
+%%%
+%%% stop_refs() ->
+%%%   stops the ETS servers
+%%%
+%%% eval_opts(System) ->
+%%%   returns all the evaluation options for a given System
+%%%
+%%% eval_step(System, Option) ->
+%%%   performs an evaluation step in System, given an Option
+%%%   returns the new System
+%%%
+%%% eval_mult(System, Option, Steps) ->
+%%%   performs Steps evaluation steps in System in the Option direction
+%%%   returns the new System
+%%% eval_norm(System) ->
+%%%   performs evaluation steps (except for sched steps) in System
+%%%   until the system becomes "normalized" (more info on the paper)
+%%%---------------------------------------------------------------------
+
 -module(rev_erlang).
 -export([start/0,
-         start_refs/1,stop_refs/0,
+         start_refs/1, stop_refs/0,
          eval_opts/1, eval_step/2, eval_mult/3, eval_norm/1]).
 
 -include("rev_erlang.hrl").
