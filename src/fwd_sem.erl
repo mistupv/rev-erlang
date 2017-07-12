@@ -107,7 +107,7 @@ eval_seq_1(Env,Exp) ->
           Var = utils:build_var(VarNum),
           FunName = lists:nth(2,CallArgs),
           % here, Core just transforms Args to a literal
-          %({c_literal,[],[e_1,e_2]} without transforming e_1)
+          % ({c_literal,[],[e_1,e_2]} without transforming e_1)
           FunArgs = utils:list_from_core(lists:nth(3,CallArgs)),
           {Env,Var,{spawn,{Var,FunName,FunArgs}}};
         _Other ->
@@ -195,7 +195,6 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         PidNum = ref_lookup(?FRESH_PID),
         ref_add(?FRESH_PID, PidNum + 1),
         SpawnPid = cerl:c_int(PidNum),
-        % TODO: Ask German about NewEnv
         SpawnProc = #proc{pid = SpawnPid, env = NewEnv, exp = cerl:c_apply(CallName,CallArgs)},
         NewHist = [{spawn, Env, Exp, SpawnPid}|Hist],
         RepExp = utils:replace(Var, SpawnPid, NewExp),
@@ -240,7 +239,6 @@ eval_list(Env,[Exp|Exps]) ->
       {NewEnv,NewExp,Label} = eval_seq(Env,Exp),
       {NewEnv,[NewExp|Exps],Label};
     false ->
-      % Not sure about this
       {NewEnv,NewExp,Label} = eval_list(Env,Exps),
       {NewEnv,[Exp|NewExp],Label}
   end.

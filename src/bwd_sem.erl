@@ -13,7 +13,6 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
     {self, OldEnv, OldExp} ->
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},
       #sys{msgs = Msgs, procs = [OldProc|RestProcs]};
-    % Attention: DestPid and MsgValue are not needed to go back 
     {send, OldEnv, OldExp, _DestPid, {_MsgValue, Time}} ->
       {_Msg, RestMsgs} = utils:select_msg(Msgs, Time),
       OldProc = Proc#proc{hist = RestHist, env = OldEnv, exp = OldExp},

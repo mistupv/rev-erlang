@@ -43,19 +43,16 @@
 -define(NULL_RULE, null_rule).
 -define(NULL_OPT,  null_opt).
 
-% TODO: Add types
 -record(proc, {pid,
                hist = [],
                env  = [],
                exp,
                mail = []}).
 
-% TODO: Add types
 -record(msg, {dest,
               val,
               time}).
 
-% TODO: Add types
 -record(sys, {msgs  = [],
               procs = []}).
 
