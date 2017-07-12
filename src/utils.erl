@@ -237,11 +237,7 @@ stringToCoreArgs(Str) ->
   StrDot = Str ++ ".",
   {ok, ParsedStr, _} = erl_scan:string(StrDot),
   {ok, Exprs} = erl_parse:parse_exprs(ParsedStr),
-  EvalExprs = [element(2,erl_eval:expr(Expr,[])) || Expr <- Exprs],
-  StrExprs = tl(lists:droplast(lists:flatten(io_lib:format("~p", ([EvalExprs]))))) ++ ".",
-  {ok, ParsedExprs, _} = erl_scan:string(StrExprs),
-  {ok, TypedExprs} = erl_parse:parse_exprs(ParsedExprs),
-  CoreExprs = [toCore(Expr) || Expr <- TypedExprs],
+  CoreExprs = [toCore(Expr) || Expr <- Exprs],
   CoreExprs.
 
 toCore(Expr) ->
