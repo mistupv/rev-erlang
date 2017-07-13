@@ -20,7 +20,7 @@ Then, execute the script *rev-erlang.sh*:
 ```
 An astonishing graphical interface will appear in your screen.
 
-![GUI screenshot](/docs/rev-erlang-init.png)
+![GUI screenshot](https://github.com/mistupv/rev-erlang/blob/screens/rev-erlang-init.png?raw=true)
 
 To start using the application:
  1. Select an Erlang file using the File > Open option from the menu bar.
