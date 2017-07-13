@@ -8,8 +8,14 @@ script:
 	@echo "erl -noshell -pa ebin -eval \"rev_erlang:start().\" -s init stop" > rev-erlang.sh
 	@chmod +x rev-erlang.sh
 
-clean:
+docs: clean-docs
+	@erl -noshell -run edoc_run files '["src/fwd_sem.erl"]' '[{dir, "docs"}]'
+
+clean: clean-docs
 	@rm -Rf ebin
+
+clean-docs:
+	@rm -Rf docs
 
 debug: clean
 	@mkdir ebin
