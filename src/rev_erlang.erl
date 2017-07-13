@@ -1,35 +1,9 @@
-%%%---------------------------------------------------------------------
-%%% Description module rev_erlang
-%%%---------------------------------------------------------------------
-%%% The main module for the rev-erlang project.
+%%%-------------------------------------------------------------------
+%%% @doc The main module for the rev-erlang project.
 %%% This module includes functions for starting the application
 %%% and interact with the reversible semantics for Erlang
-%%%---------------------------------------------------------------------
-%%% Exports
-%%%---------------------------------------------------------------------
-%%% start() ->
-%%%   starts the GUI
-%%%
-%%% start_refs(FunDefs) ->
-%%%   starts the ETS servers and initializes them
-%%%
-%%% stop_refs() ->
-%%%   stops the ETS servers
-%%%
-%%% eval_opts(System) ->
-%%%   returns all the evaluation options for a given System
-%%%
-%%% eval_step(System, Option) ->
-%%%   performs an evaluation step in System, given an Option
-%%%   returns the new System
-%%%
-%%% eval_mult(System, Option, Steps) ->
-%%%   performs Steps evaluation steps in System in the Option direction
-%%%   returns the new System
-%%% eval_norm(System) ->
-%%%   performs evaluation steps (except for sched steps) in System
-%%%   until the system becomes "normalized" (more info on the paper)
-%%%---------------------------------------------------------------------
+%%% @end
+%%%-------------------------------------------------------------------
 
 -module(rev_erlang).
 -export([start/0,
@@ -38,10 +12,18 @@
 
 -include("rev_erlang.hrl").
 
+%%--------------------------------------------------------------------
+%% @doc Starts the GUI
+%% @end
+%%--------------------------------------------------------------------
 start() ->
   rev_erlang_gui:setup_gui(),
   ok.
 
+%%--------------------------------------------------------------------
+%% @doc Starts the ETS servers and initializes them
+%% @end
+%%--------------------------------------------------------------------
 start_refs(FunDefs) ->
   ?LOG("starting refs"),
   ref_start(),
@@ -50,10 +32,19 @@ start_refs(FunDefs) ->
   ref_add(?FRESH_TIME, 1),
   ref_add(?FRESH_VAR,  1).
 
+%%--------------------------------------------------------------------
+%% @doc Stops the ETS servers
+%% @end
+%%--------------------------------------------------------------------
 stop_refs() ->
   ?LOG("stopping refs"),
   ref_stop().
 
+
+%%--------------------------------------------------------------------
+%% @doc Returns all the evaluation options for a given System
+%% @end
+%%--------------------------------------------------------------------
 eval_opts(System) ->  
   FwdOpts = fwd_sem:eval_opts(System),
   BwdOpts = bwd_sem:eval_opts(System),
@@ -68,6 +59,11 @@ eval_step(System, Option) ->
     end,
   NewSystem.
 
+%%--------------------------------------------------------------------
+%% @doc Performs Steps evaluation steps in System in
+%% the Option direction
+%% @end
+%%--------------------------------------------------------------------
 eval_mult(System, Option, Steps) ->
   eval_mult_1(System, Option, Steps, 0).
 
@@ -90,6 +86,11 @@ eval_mult_1(System, Option, Steps, StepsDone) ->
       eval_mult_1(NewSystem, Option, Steps, StepsDone + 1)
   end.
 
+%%--------------------------------------------------------------------
+%% @doc Performs evaluation steps (except for sched steps) in System
+%% until the system becomes "normalized" (more info on the paper)
+%% @end
+%%--------------------------------------------------------------------
 eval_norm(System) ->
   eval_norm_1(System, 0).
 

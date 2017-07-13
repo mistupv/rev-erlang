@@ -1,31 +1,19 @@
-%%%---------------------------------------------------------------------
-%%% Description module bwd_sem
-%%%---------------------------------------------------------------------
-%%% Some functions that implement the backward (reversible) semantics
-%%% for Erlang. These can be divided into:
-%%%   * Functions to get the evaluation options (*opts)
-%%%   * Functions to perform the evaluation
-%%%---------------------------------------------------------------------
-%%% Exports
-%%%---------------------------------------------------------------------
-%%% eval_step(System, Pid) ->
-%%%   performs an evaluation step in process Pid, given System
-%%%   returns the new System
-%%%
-%%% eval_sched(System, Id) ->
-%%%   performs an evaluation step in message Id, given System
-%%%   returns the new System
-%%%
-%%% eval_opts(System) ->
-%%%   gets the evaluation options for a given System
-%%%   returns the options
-%%%---------------------------------------------------------------------
+%%%-------------------------------------------------------------------
+%%% @doc Some functions that implement the backward (reversible)
+%%% semantics for Erlang. These can be divided into functions to get
+%%% the evaluation options and functions to perform the evaluation
+%%% @end
+%%%-------------------------------------------------------------------
 
 -module(bwd_sem).
 -export([eval_step/2, eval_sched/2, eval_opts/1]).
 
 -include("rev_erlang.hrl").
 
+%%--------------------------------------------------------------------
+%% @doc Performs an evaluation step in process Pid, given System
+%% @end
+%%--------------------------------------------------------------------
 eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
   {Proc, RestProcs} = utils:select_proc(Procs, Pid),
   #proc{pid = Pid, hist = [CurHist|RestHist]} = Proc,
@@ -49,6 +37,10 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
       #sys{msgs = Msgs, procs = [OldProc|RestProcs]}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc Performs an evaluation step in message Id, given System
+%% @end
+%%--------------------------------------------------------------------
 eval_sched(System, Id) ->
   #sys{msgs = Msgs, procs = Procs} = System,
   [{Proc,_}] = utils:select_proc_with_time(Procs, Id),
@@ -61,6 +53,10 @@ eval_sched(System, Id) ->
   OldProcs = [OldProc|RestProcs],
   #sys{msgs = OldMsgs, procs = OldProcs}.
 
+%%--------------------------------------------------------------------
+%% @doc Gets the evaluation options for a given System
+%% @end
+%%--------------------------------------------------------------------
 eval_opts(System) ->
   SchedOpts = eval_sched_opts(System),
   ProcsOpts = eval_procs_opts(System),

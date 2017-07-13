@@ -9,7 +9,10 @@ script:
 	@chmod +x rev-erlang.sh
 
 docs: clean-docs
-	@erl -noshell -run edoc_run files '["src/fwd_sem.erl"]' '[{dir, "docs"}]'
+	@erl -noshell -run edoc_run files '["src/rev_erlang.erl", \
+	                                    "src/fwd_sem.erl", \
+	                                    "src/bwd_sem.erl", \
+	                                    "src/utils.erl"]' '[{dir, "docs"}]'
 
 clean: clean-docs
 	@rm -Rf ebin

@@ -1,25 +1,9 @@
-%%%---------------------------------------------------------------------
-%%% Description module fwd_sem
-%%%---------------------------------------------------------------------
-%%% Some functions that implement the forward (reversible) semantics
-%%% for Erlang. These can be divided into:
-%%%   * Functions to get the evaluation options (*opts)
-%%%   * Functions to perform the evaluation
-%%%---------------------------------------------------------------------
-%%% Exports
-%%%---------------------------------------------------------------------
-%%% eval_step(System, Pid) ->
-%%%   performs an evaluation step in process Pid, given System
-%%%   returns the new System
-%%%
-%%% eval_sched(System, Id) ->
-%%%   performs an evaluation step in message Id, given System
-%%%   returns the new System
-%%%
-%%% eval_opts(System) ->
-%%%   gets the evaluation options for a given System
-%%%   returns the options
-%%%---------------------------------------------------------------------
+%%%-------------------------------------------------------------------
+%%% @doc Some functions that implement the forward (reversible)
+%%% semantics for Erlang. These can be divided into functions to get
+%%% the evaluation options and functions to perform the evaluation
+%%% @end
+%%%-------------------------------------------------------------------
 
 -module(fwd_sem).
 -export([eval_step/2, eval_sched/2, eval_opts/1]).
@@ -192,6 +176,10 @@ eval_seq_1(Env,Exp) ->
         {Env, Var, {rec, Var, cerl:receive_clauses(Exp)}}
   end.
 
+%%--------------------------------------------------------------------
+%% @doc Performs an evaluation step in process Pid, given System
+%% @end
+%%--------------------------------------------------------------------
 eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
   {Proc, RestProcs} = utils:select_proc(Procs, Pid),
   #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail} = Proc,
@@ -233,6 +221,10 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
     end,
   NewSystem.
 
+%%--------------------------------------------------------------------
+%% @doc Performs an evaluation step in message Id, given System
+%% @end
+%%--------------------------------------------------------------------
 eval_sched(#sys{msgs = Msgs, procs = Procs}, Id) ->
   {Msg, RestMsgs} = utils:select_msg(Msgs, Id),
   #msg{dest = DestPid, val = Value, time = Time} = Msg,
@@ -282,6 +274,10 @@ matchrec(Clauses, [CurMsg|RestMsgs], AccMsgs) ->
       matchrec(Clauses, RestMsgs, [CurMsg|AccMsgs])
   end.
 
+%%--------------------------------------------------------------------
+%% @doc Gets the evaluation options for a given System
+%% @end
+%%--------------------------------------------------------------------
 eval_opts(System) ->
   SchedOpts = eval_sched_opts(System),
   ProcsOpts = eval_procs_opts(System),
