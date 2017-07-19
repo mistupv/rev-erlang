@@ -244,11 +244,16 @@ loadFile(File) ->
   Frame = ref_lookup(?FRAME),
   case compile:file(File, [to_core,binary]) of
     {ok, _, CoreForms} ->
+      NoAttsCoreForms = cerl:update_c_module(CoreForms,
+                                             cerl:module_name(CoreForms),
+                                             cerl:module_exports(CoreForms),
+                                             [],
+                                             cerl:module_defs(CoreForms)),
       Stripper = fun(Tree) -> cerl:set_ann(Tree, []) end,
-      CleanCoreForms = cerl_trees:map(Stripper, CoreForms),
+      CleanCoreForms = cerl_trees:map(Stripper, NoAttsCoreForms),
       FunDefs = cerl:module_defs(CleanCoreForms),
       CodeText = ref_lookup(?CODE_TEXT),
-      wxTextCtrl:setValue(CodeText,core_pp:format(CleanCoreForms)),
+      wxTextCtrl:setValue(CodeText, core_pp:format(CleanCoreForms)),
       Status = ref_lookup(?STATUS),
       ref_add(?STATUS, Status#status{loaded = {true,FunDefs}}),
       LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
