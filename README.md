@@ -39,7 +39,7 @@ Both modes can be used interchangeably.
 
 ## Publications
 
-This tool is an implementation of the proposed reversible semantics in these publications:
+This tool is an implementation of the improved version of a reversible semantics for Erlang (submitted for publication). A preliminary version of this semantics can be found in:
   * Naoki Nishida, Adrián Palacios and Germán Vidal. [A Reversible Semantics for Erlang](http://users.dsic.upv.es/~gvidal/german/lopstr16b/paper.pdf). To be published in *Proceedings of the 26th International Symposium on
 Logic-Based Program Synthesis and Transformation*.
 
