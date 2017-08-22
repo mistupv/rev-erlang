@@ -29,6 +29,7 @@ setup_gui() ->
 setupMainPanel(Parent) ->
   MainPanel = wxPanel:new(Parent),
   MainSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
 
   LeftPanel = wxPanel:new(MainPanel),
   LeftSizer = setupLeftSizer(LeftPanel),
@@ -38,7 +39,7 @@ setupMainPanel(Parent) ->
   RightSizer = setupRightSizer(RightPanel),
   wxWindow:setSizerAndFit(RightPanel, RightSizer),
 
-  wxSizer:add(MainSizer, LeftPanel),
+  wxSizer:add(MainSizer, LeftPanel, SizerFlags),
   wxSizer:add(MainSizer, RightPanel),
   wxWindow:setSizer(MainPanel, MainSizer),
   MainPanel.
@@ -52,14 +53,14 @@ setupLeftSizer(Parent) ->
   wxNotebook:addPage(Notebook, StatePanel, "State"),
   % wxNotebook:layout(Notebook),
   LeftSizer = wxBoxSizer:new(?wxVERTICAL),
-  wxSizer:add(LeftSizer, Notebook),
+  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
+  wxSizer:add(LeftSizer, Notebook, SizerFlags),
   LeftSizer.
 
 setupCodePanel(Parent) ->
   CodePanel = wxPanel:new(Parent),   
   CodeText = wxTextCtrl:new(CodePanel, ?CODE_TEXT,
-                             [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
-                              {size,{460,460}}]),
+                             [{style,?wxTE_MULTILINE bor ?wxTE_READONLY}]),
   ref_add(?CODE_TEXT,CodeText),
   FundefStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Funs: "),
   FunChoice = wxChoice:new(CodePanel, ?wxID_ANY),
@@ -71,42 +72,43 @@ setupCodePanel(Parent) ->
                                   {value, ""}]),
   ref_add(?INPUT_TEXT,InputTextCtrl),
   StartButton = wxButton:new(CodePanel, ?START_BUTTON,
-                             [{label, "START"}, {size, {60, -1}}]),
+                             [{label, "START"}]),
   ref_add(?START_BUTTON,StartButton),
   wxButton:disable(StartButton),
 
   CodeSizer = wxBoxSizer:new(?wxVERTICAL),
   InputSizer = wxBoxSizer:new(?wxHORIZONTAL),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
-
-  wxSizer:add(CodeSizer, CodeText),
+  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
+  wxSizer:add(CodeSizer, CodeText, SizerFlags),
   wxSizer:addSpacer(CodeSizer, 10),
-  wxSizer:add(CodeSizer, InputSizer),
+  wxSizer:add(CodeSizer, InputSizer, [{proportion, 0}, {flag, ?wxEXPAND}]),
 
   wxSizer:add(InputSizer, FundefStaticText),
   wxSizer:add(InputSizer, FunChoice),
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, InputStaticText1),
-  wxSizer:add(InputSizer, InputTextCtrl),
+  wxSizer:add(InputSizer, InputTextCtrl, SizerFlags),
   wxSizer:add(InputSizer, InputStaticText2),
   wxSizer:addSpacer(InputSizer, 10),
-  wxSizer:add(InputSizer, StartButton, [{flag,?wxALIGN_RIGHT}]),
+  wxSizer:add(InputSizer, StartButton, [{flag, ?wxALIGN_RIGHT}]),
 
-  wxSizer:add(BorderSizer, CodeSizer, [{flag, ?wxALL}, {border, 10}]),
+  wxSizer:add(BorderSizer, CodeSizer, [{flag, ?wxALL bor ?wxEXPAND},
+                                       {proportion, 1}, {border, 10}]),
   wxWindow:setSizer(CodePanel, BorderSizer),
   CodePanel.
 
  setupStatePanel(Parent) ->
   StatePanel = wxPanel:new(Parent),
   StateText = wxTextCtrl:new(StatePanel, ?STATE_TEXT,
-                             [{style,?wxTE_MULTILINE bor ?wxTE_READONLY},
-                              {size,{460,460}}]),
+                             [{style, ?wxTE_MULTILINE bor ?wxTE_READONLY}]),
   ref_add(?STATE_TEXT, StateText),
   StateSizer = wxBoxSizer:new(?wxVERTICAL),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
-
-  wxSizer:add(StateSizer, StateText),
-  wxSizer:add(BorderSizer, StateSizer, [{flag, ?wxALL}, {border, 10}]),
+  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
+  wxSizer:add(StateSizer, StateText, SizerFlags),
+  wxSizer:add(BorderSizer, StateSizer, [{flag, ?wxALL bor ?wxEXPAND},
+                                        {proportion, 1}, {border, 10}]),
   wxWindow:setSizer(StatePanel, BorderSizer),
   StatePanel.
 
@@ -121,7 +123,8 @@ setupRightSizer(Parent) ->
   wxNotebook:addPage(Notebook, AutoPanel, "Automatic"),
   % wxNotebook:layout(Notebook),
   RightSizer = wxBoxSizer:new(?wxVERTICAL),
-  wxSizer:add(RightSizer, Notebook),
+  SizerFlags = [{proportion, 0}, {flag, ?wxEXPAND}],
+  wxSizer:add(RightSizer, Notebook, SizerFlags),
   RightSizer.
 
 setupManualPanel(Parent) ->
