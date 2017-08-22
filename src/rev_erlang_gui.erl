@@ -78,8 +78,10 @@ setupCodePanel(Parent) ->
 
   CodeSizer = wxBoxSizer:new(?wxVERTICAL),
   InputSizer = wxBoxSizer:new(?wxHORIZONTAL),
+  ref_add(?INPUT_SIZER, InputSizer),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
   SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
+
   wxSizer:add(CodeSizer, CodeText, SizerFlags),
   wxSizer:addSpacer(CodeSizer, 10),
   wxSizer:add(CodeSizer, InputSizer, [{proportion, 0}, {flag, ?wxEXPAND}]),
@@ -262,6 +264,8 @@ loadFile(File) ->
       LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
       wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_CODE),
       utils_gui:set_choices(utils:moduleNames(CleanCoreForms)),
+      InputSizer = ref_lookup(?INPUT_SIZER),
+      wxSizer:layout(InputSizer),
       StartButton = ref_lookup(?START_BUTTON),
       wxButton:enable(StartButton),
       wxFrame:setStatusText(Frame, "Loaded file " ++ File);

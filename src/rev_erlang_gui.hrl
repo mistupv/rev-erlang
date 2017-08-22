@@ -29,7 +29,8 @@
 -define(STATE_TEXT,     513).
 -define(CODE_TEXT,      514).
 -define(STATUS_BAR,     520).
--define(FUN_CHOICE,     530).
+-define(INPUT_SIZER,    530).
+-define(FUN_CHOICE,     531).
 -define(LEFT_NOTEBOOK,  540).
 -define(RIGHT_NOTEBOOK, 541).
 
