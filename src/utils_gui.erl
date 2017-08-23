@@ -3,7 +3,8 @@
          option_to_button_label/1, button_to_option/1,
          disable_rule_buttons/1, set_button_label_if/2, set_ref_button_if/2,
          set_choices/1, stop_refs/0, update_status_text/1,
-         sttext_single/1, sttext_mult/2, sttext_norm/1]).
+         sttext_single/1, sttext_mult/2, sttext_norm/1,
+         prev_font_size/1, next_font_size/1]).
 
 -include("rev_erlang.hrl").
 -include("rev_erlang_gui.hrl").
@@ -148,6 +149,27 @@ sttext_mult(StepsDone, Steps) ->
 update_status_text(String) ->
   Frame = ref_lookup(?FRAME),
   wxFrame:setStatusText(Frame, String).
+
+index_of(Elem, List) -> index_of(Elem, List, 1).
+
+index_of(_, [], _)  -> not_found;
+index_of(Elem, [Elem|_], Index) -> Index;
+index_of(Elem, [_|Rest], Index) -> index_of(Elem, Rest, Index + 1).
+
+prev_font_size(CurSize) ->
+  SizeIdx = index_of(CurSize, ?FONT_SIZES),
+  case SizeIdx == 1 of
+    true  -> CurSize;
+    false -> lists:nth(SizeIdx - 1, ?FONT_SIZES)
+  end.
+
+next_font_size(CurSize) ->
+  SizeIdx = index_of(CurSize, ?FONT_SIZES),
+  SizeLen = length(?FONT_SIZES),
+  case SizeIdx == SizeLen of
+    true  -> CurSize;
+    false -> lists:nth(SizeIdx + 1, ?FONT_SIZES)
+  end.
 
 ref_lookup(Id) ->
     ets:lookup_element(?GUI_REF, Id, 2).

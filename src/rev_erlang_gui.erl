@@ -58,10 +58,12 @@ setupLeftSizer(Parent) ->
   LeftSizer.
 
 setupCodePanel(Parent) ->
-  CodePanel = wxPanel:new(Parent),   
+  CodePanel = wxPanel:new(Parent),
   CodeText = wxTextCtrl:new(CodePanel, ?CODE_TEXT,
                              [{style,?wxTE_MULTILINE bor ?wxTE_READONLY}]),
   ref_add(?CODE_TEXT,CodeText),
+
+
   FundefStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Funs: "),
   FunChoice = wxChoice:new(CodePanel, ?wxID_ANY),
   ref_add(?FUN_CHOICE,FunChoice),
@@ -236,11 +238,15 @@ setupAutoPanel(Parent) ->
 setupMenu() ->
   MenuBar = wxMenuBar:new(),
   File = wxMenu:new(),
+  View = wxMenu:new(),
   Help = wxMenu:new(),
   wxMenuBar:append(MenuBar,File,"&File"),
+  wxMenuBar:append(MenuBar,View,"&View"),
   wxMenuBar:append(MenuBar,Help,"&Help"),
   wxMenu:append(File,?OPEN,"Open\tCtrl-O"),
   wxMenu:append(File,?EXIT,"Quit\tCtrl-Q"),
+  wxMenu:append(View,?ZOOM_IN,"Zoom In\tCtrl-+"),
+  wxMenu:append(View,?ZOOM_OUT,"Zoom Out\tCtrl--"),
   wxMenu:append(Help,?ABOUT,"About"),
   Frame = ref_lookup(?FRAME),
   wxFrame:setMenuBar(Frame,MenuBar).
@@ -291,6 +297,28 @@ openDialog(Parent) ->
       _Other -> continue
   end,
   wxDialog:destroy(Dialog).
+
+zoomIn() ->
+  CodeText = ref_lookup(?CODE_TEXT),
+  StateText = ref_lookup(?STATE_TEXT),
+  Font = wxTextCtrl:getFont(CodeText),
+  CurFontSize = wxFont:getPointSize(Font),
+  NewFontSize = utils_gui:next_font_size(CurFontSize),
+  NewFont = wxFont:new(),
+  wxFont:setPointSize(NewFont, NewFontSize),
+  wxTextCtrl:setFont(CodeText, NewFont),
+  wxTextCtrl:setFont(StateText, NewFont).
+
+zoomOut() ->
+  CodeText = ref_lookup(?CODE_TEXT),
+  StateText = ref_lookup(?STATE_TEXT),
+  Font = wxTextCtrl:getFont(CodeText),
+  CurFontSize = wxFont:getPointSize(Font),
+  NewFontSize = utils_gui:prev_font_size(CurFontSize),
+  NewFont = wxFont:new(),
+  wxFont:setPointSize(NewFont, NewFontSize),
+  wxTextCtrl:setFont(CodeText, NewFont),
+  wxTextCtrl:setFont(StateText, NewFont).
 
 init_system(Fun,Args) ->
   Proc = #proc{pid = cerl:c_int(1),
@@ -455,6 +483,12 @@ loop() ->
         #wx{id = ?OPEN, event = #wxCommand{type = command_menu_selected}} ->
           Frame = ref_lookup(?FRAME),
           openDialog(Frame),
+          loop();
+        #wx{id = ?ZOOM_IN, event = #wxCommand{type = command_menu_selected}} ->
+          zoomIn(),
+          loop();
+        #wx{id = ?ZOOM_OUT, event = #wxCommand{type = command_menu_selected}} ->
+          zoomOut(),
           loop();
         #wx{id = ?EXIT, event = #wxCommand{type = command_menu_selected}} ->
           Frame = ref_lookup(?FRAME),
