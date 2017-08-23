@@ -5,9 +5,13 @@
 -define(FRAME_SIZE_MIN,  {750, 600}).
 -define(FRAME_SIZE_MAX,  {750, 600}).
 
--define(ABOUT, ?wxID_ABOUT).
--define(EXIT,  ?wxID_EXIT).
--define(OPEN,  ?wxID_OPEN).
+-define(FONT_SIZES, [8, 10, 12, 13, 14, 16, 20, 24, 32, 36, 42, 48]).
+
+-define(ABOUT,    ?wxID_ABOUT).
+-define(EXIT,     ?wxID_EXIT).
+-define(OPEN,     ?wxID_OPEN).
+-define(ZOOM_IN,  100).
+-define(ZOOM_OUT, 101).
 
 -define(START_BUTTON,        400).
 
