@@ -95,13 +95,14 @@ eval_norm(System) ->
   eval_norm_1(System, 0).
 
 eval_norm_1(System, Steps) ->
-  Opts = fwd_sem:eval_procs_opts(System),
-  case Opts of
+  Opts = fwd_sem:eval_opts(System),
+  ProcsOpts = utils:filter_procs_opts(Opts),
+  case ProcsOpts of
     [] ->
       {System, Steps};
     _Other ->
-      RandIdx = rand:uniform(length(Opts)),
-      RandOpt = lists:nth(RandIdx, Opts),
+      RandIdx = rand:uniform(length(ProcsOpts)),
+      RandOpt = lists:nth(RandIdx, ProcsOpts),
       NewSystem = eval_step(System, RandOpt),
       eval_norm_1(NewSystem, Steps + 1)
   end.

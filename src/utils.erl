@@ -12,7 +12,8 @@
          % opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1, toCore/1,
-         filter_options/2, has_fwd/1, has_bwd/1, has_norm/1,
+         filter_options/2, filter_procs_opts/1,
+         has_fwd/1, has_bwd/1, has_norm/1,
          is_queue_minus_msg/3, topmost_rec/1]).
 
 -include("rev_erlang.hrl").
@@ -337,6 +338,18 @@ filter_options([CurOpt|RestOpts], Id) ->
   case (OptId == Id) of
     true -> [CurOpt|filter_options(RestOpts,Id)];
     false -> filter_options(RestOpts,Id)
+  end.
+
+%%--------------------------------------------------------------------
+%% @doc Filters the process options from a list of Options
+%% @end
+%%--------------------------------------------------------------------
+filter_procs_opts([]) -> [];
+filter_procs_opts([CurOpt|RestOpts]) ->
+  #opt{type = Type} = CurOpt,
+  case Type of
+    ?TYPE_MSG  -> filter_procs_opts(RestOpts);
+    ?TYPE_PROC -> [CurOpt|filter_procs_opts(RestOpts)]
   end.
 
 %%--------------------------------------------------------------------
