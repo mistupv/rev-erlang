@@ -67,8 +67,7 @@ setupCodePanel(Parent) ->
   FundefStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Funs: "),
   FunChoice = wxChoice:new(CodePanel, ?wxID_ANY),
   ref_add(?FUN_CHOICE,FunChoice),
-  InputStaticText1 = wxStaticText:new(CodePanel, ?wxID_ANY, "Input args: ["),
-  InputStaticText2 = wxStaticText:new(CodePanel, ?wxID_ANY, "]"),
+  InputStaticText = wxStaticText:new(CodePanel, ?wxID_ANY, "Input args: "),
   InputTextCtrl = wxTextCtrl:new(CodePanel, ?INPUT_TEXT,
                                  [{style, ?wxBOTTOM},
                                   {value, ""}]),
@@ -91,9 +90,8 @@ setupCodePanel(Parent) ->
   wxSizer:add(InputSizer, FundefStaticText),
   wxSizer:add(InputSizer, FunChoice),
   wxSizer:addSpacer(InputSizer, 10),
-  wxSizer:add(InputSizer, InputStaticText1),
+  wxSizer:add(InputSizer, InputStaticText),
   wxSizer:add(InputSizer, InputTextCtrl, SizerFlags),
-  wxSizer:add(InputSizer, InputStaticText2),
   wxSizer:addSpacer(InputSizer, 10),
   wxSizer:add(InputSizer, StartButton, [{flag, ?wxALIGN_RIGHT}]),
 
@@ -320,7 +318,7 @@ zoomOut() ->
   wxTextCtrl:setFont(CodeText, NewFont),
   wxTextCtrl:setFont(StateText, NewFont).
 
-init_system(Fun,Args) ->
+init_system(Fun, Args) ->
   Proc = #proc{pid = cerl:c_int(1),
                exp = cerl:c_apply(Fun, Args)},
   Procs = [Proc],
@@ -382,13 +380,13 @@ start() ->
   InputText = wxTextCtrl:getValue(InputTextCtrl),
   FunChoice = ref_lookup(?FUN_CHOICE),
   NumChoice = wxChoice:getSelection(FunChoice),
-  StringChoice = wxChoice:getString(FunChoice,NumChoice),
+  StringChoice = wxChoice:getString(FunChoice, NumChoice),
   Fun = utils:stringToFunName(StringChoice),
   Args = utils:stringToCoreArgs(InputText),
   {_, FunArity} = cerl:var_name(Fun),
   case FunArity == length(Args) of
     true ->
-      start(Fun,Args),
+      start(Fun, Args),
       ?LOG("start fun " ++ StringChoice ++ " with args " ++ InputText);
     false ->
       utils_gui:update_status_text(?ERROR_NUM_ARGS),
