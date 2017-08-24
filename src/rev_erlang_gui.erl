@@ -240,16 +240,16 @@ setupMenu() ->
   File = wxMenu:new(),
   View = wxMenu:new(),
   Help = wxMenu:new(),
-  wxMenuBar:append(MenuBar,File,"&File"),
-  wxMenuBar:append(MenuBar,View,"&View"),
-  wxMenuBar:append(MenuBar,Help,"&Help"),
-  wxMenu:append(File,?OPEN,"Open\tCtrl-O"),
-  wxMenu:append(File,?EXIT,"Quit\tCtrl-Q"),
-  wxMenu:append(View,?ZOOM_IN,"Zoom In\tCtrl-+"),
-  wxMenu:append(View,?ZOOM_OUT,"Zoom Out\tCtrl--"),
-  wxMenu:append(Help,?ABOUT,"About"),
+  wxMenuBar:append(MenuBar, File, "&File"),
+  wxMenuBar:append(MenuBar, View, "&View"),
+  wxMenuBar:append(MenuBar, Help, "&Help"),
+  wxMenu:append(File, ?OPEN,     "Open\tCtrl-O"),
+  wxMenu:append(File, ?EXIT,     "Quit\tCtrl-Q"),
+  wxMenu:append(View, ?ZOOM_IN,  "Zoom In\tCtrl-+"),
+  wxMenu:append(View, ?ZOOM_OUT, "Zoom Out\tCtrl--"),
+  wxMenu:append(Help, ?ABOUT,    "About"),
   Frame = ref_lookup(?FRAME),
-  wxFrame:setMenuBar(Frame,MenuBar).
+  wxFrame:setMenuBar(Frame, MenuBar).
 
 loadFile(File) ->
   Frame = ref_lookup(?FRAME),
@@ -266,7 +266,7 @@ loadFile(File) ->
       CodeText = ref_lookup(?CODE_TEXT),
       wxTextCtrl:setValue(CodeText, core_pp:format(CleanCoreForms)),
       Status = ref_lookup(?STATUS),
-      ref_add(?STATUS, Status#status{loaded = {true,FunDefs}}),
+      ref_add(?STATUS, Status#status{loaded = {true, FunDefs}}),
       LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
       wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_CODE),
       utils_gui:set_choices(utils:moduleNames(CleanCoreForms)),
@@ -322,7 +322,7 @@ zoomOut() ->
 
 init_system(Fun,Args) ->
   Proc = #proc{pid = cerl:c_int(1),
-               exp = cerl:c_apply(Fun,Args)},
+               exp = cerl:c_apply(Fun, Args)},
   Procs = [Proc],
   System = #sys{procs = Procs},
   ref_add(?SYSTEM, System),
@@ -335,7 +335,7 @@ start(Fun,Args) ->
   #status{loaded = {true, FunDefs}} = Status,
   utils_gui:stop_refs(),
   rev_erlang:start_refs(FunDefs),
-  init_system(Fun,Args),
+  init_system(Fun, Args),
   refresh(),
   LeftNotebook = ref_lookup(?LEFT_NOTEBOOK),
   wxNotebook:setSelection(LeftNotebook, ?PAGEPOS_STATE),
