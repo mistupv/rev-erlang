@@ -37,8 +37,12 @@ eval_seq_1(Env,Exp) ->
                                       NewConsTlExp)
       end,
       {NewEnv,NewExp,Label};
+    values ->
+      {NewEnv, NewValuesEs, Label} = eval_list(Env, cerl:values_es(Exp)),
+      NewExp = cerl:c_values(NewValuesEs),
+      {NewEnv, NewExp, Label};
     tuple ->
-      {NewEnv, NewTupleEs, Label} = eval_list(Env,cerl:tuple_es(Exp)),
+      {NewEnv, NewTupleEs, Label} = eval_list(Env, cerl:tuple_es(Exp)),
       NewExp = cerl:c_tuple(NewTupleEs),
       {NewEnv, NewExp, Label};
     apply -> 
@@ -242,6 +246,7 @@ is_exp(Exp) ->
     literal -> false;
     nil -> false;
     cons -> is_exp(cerl:cons_hd(Exp)) or is_exp(cerl:cons_tl(Exp));
+    values -> is_exp(cerl:values_es(Exp));
     tuple -> is_exp(cerl:tuple_es(Exp));
     _Other -> true
   end.
@@ -331,8 +336,10 @@ eval_exp_opt(Exp, Mail) ->
                   ?NOT_EXP
               end
           end;
+        values ->
+          eval_exp_list_opt(cerl:values_es(Exp), Mail);
         tuple ->
-            eval_exp_list_opt(cerl:tuple_es(Exp), Mail);
+          eval_exp_list_opt(cerl:tuple_es(Exp), Mail);
         apply ->
           ApplyArgs = cerl:apply_args(Exp),
           case is_exp(ApplyArgs) of
