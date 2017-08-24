@@ -108,7 +108,8 @@ set_ref_button_if(Ref, Cond) ->
 set_choices(Choices) ->
   FunChoice = ref_lookup(?FUN_CHOICE),
   wxChoice:clear(FunChoice),
-  [wxChoice:append(FunChoice, Choice) || Choice <- Choices].
+  [wxChoice:append(FunChoice, Choice) || Choice <- Choices],
+  wxChoice:setSelection(FunChoice, 0).
 
 stop_refs() ->
   case is_app_running() of
