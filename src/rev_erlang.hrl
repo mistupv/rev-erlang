@@ -47,7 +47,8 @@
                hist = [],
                env  = [],
                exp,
-               mail = []}).
+               mail = [],
+               roll = []}).
 
 -record(msg, {dest,
               val,

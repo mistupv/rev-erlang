@@ -23,6 +23,7 @@
 -define(FORWARD_BUTTON,      422).
 -define(BACKWARD_BUTTON,     423).
 -define(NORMALIZE_BUTTON,    424).
+-define(ROLL_BUTTON,         425).
 
 -define(SYSTEM,         500).
 -define(STATUS,         501).
@@ -32,6 +33,8 @@
 -define(STEP_TEXT,      512).
 -define(STATE_TEXT,     513).
 -define(CODE_TEXT,      514).
+-define(ROLL_PID_TEXT,  515).
+-define(ROLL_STEP_TEXT, 516).
 -define(STATUS_BAR,     520).
 -define(INPUT_SIZER,    530).
 -define(FUN_CHOICE,     531).
