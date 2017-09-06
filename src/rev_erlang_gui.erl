@@ -190,7 +190,7 @@ setupManualPanel(Parent) ->
 setupAutoPanel(Parent) ->
   AutoPanel = wxPanel:new(Parent),
   StepStaticText = wxStaticText:new(AutoPanel, ?wxID_ANY, "Steps:"),
-  StepTextCtrl = wxTextCtrl:new(AutoPanel, ?PID_TEXT, [{style,?wxBOTTOM}]),
+  StepTextCtrl = wxTextCtrl:new(AutoPanel, ?STEP_TEXT, [{style,?wxBOTTOM}]),
   ref_add(?STEP_TEXT, StepTextCtrl),
   HorizontalLine = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL},
                                                 {size, {200, -1}}]),
