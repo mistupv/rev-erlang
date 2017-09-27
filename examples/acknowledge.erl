@@ -1,13 +1,13 @@
 -module(acknowledge).
--export([main/0]).
+-export([main/0, other_main/0]).
 
 main() ->
   MyPid = self(),
-  OtherPid = spawn(?MODULE, fun other_main/0, []),
+  OtherPid = spawn(?MODULE, other_main, []),
   OtherPid ! MyPid,
   receive
     ack -> ok;
-    _Other -> not_ok
+    _   -> not_ok
   end.
 
 other_main() ->
