@@ -1,14 +1,14 @@
 -module(client_server).
--export([main/0]).
+-export([main/0, server/0, client/1]).
 
 main() -> 
-  S = spawn(?MODULE, fun server/0, []),
-  spawn(?MODULE, fun client/1, [S]),
+  S = spawn(?MODULE, server, []),
+  spawn(?MODULE, client, [S]),
   client(S).
 
 server() ->
   receive
-    {P, _M} ->
+    {P, _} ->
       P ! ack,
       server()
   end.
