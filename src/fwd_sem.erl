@@ -214,13 +214,13 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         NewHist = [{send, Env, Exp, DestPid, {MsgValue, Time}}|Hist],
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = NewExp},
         #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
-      {spawn, {Var, CallName, CallArgs}} ->
+      {spawn, {Var, FunName, FunArgs}} ->
         PidNum = ref_lookup(?FRESH_PID),
         ref_add(?FRESH_PID, PidNum + 1),
         SpawnPid = cerl:c_int(PidNum),
-        ArgsLen = length(CallArgs),
-        CallFun = cerl:c_var({cerl:concrete(CallName), ArgsLen}),
-        SpawnProc = #proc{pid = SpawnPid, env = NewEnv, exp = cerl:c_apply(CallFun,CallArgs)},
+        ArgsLen = length(FunArgs),
+        FunCall = cerl:c_var({cerl:concrete(FunName), ArgsLen}),
+        SpawnProc = #proc{pid = SpawnPid, env = [], exp = cerl:c_apply(FunCall,FunArgs)},
         NewHist = [{spawn, Env, Exp, SpawnPid}|Hist],
         RepExp = utils:replace(Var, SpawnPid, NewExp),
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
