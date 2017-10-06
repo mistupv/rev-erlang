@@ -382,23 +382,26 @@ eval_exp_opt(Exp, Mail) ->
           end;
         call ->
           CallModule = cerl:call_module(Exp),
-          CallName = cerl:call_name(Exp),
-          case {CallModule, CallName} of
-            {{c_literal, _, 'erlang'}, {c_literal, _, 'spawn'}} -> #opt{rule = ?RULE_SPAWN};
-            _Other ->
-              CallArgs = cerl:call_args(Exp),
-              case is_exp(CallArgs) of
+          case is_exp(CallModule) of
+            true ->
+              eval_exp_opt(CallModule, Mail);
+            false ->
+              CallName = cerl:call_name(Exp),
+              case is_exp(CallName) of
                 true ->
-                  eval_exp_list_opt(CallArgs, Mail);
+                  eval_exp_opt(CallName, Mail);
                 false ->
-                  case CallModule of
-                    {c_literal, _, 'erlang'} ->
-                      case CallName of
-                        {c_literal, _, 'self'} -> #opt{rule = ?RULE_SELF};
-                        {c_literal, _, '!'} -> #opt{rule = ?RULE_SEND};
-                        _OtherCall -> #opt{rule = ?RULE_SEQ}
-                      end;
-                    _OtherModule -> #opt{rule = ?RULE_SEQ}
+                  CallArgs = cerl:call_args(Exp),
+                  case is_exp(CallArgs) of
+                    true ->
+                      eval_exp_list_opt(CallArgs, Mail);
+                    false ->
+                      case {CallModule, CallName} of
+                        {{c_literal, _, 'erlang'},{c_literal, _, 'spawn'}} -> #opt{rule = ?RULE_SPAWN};
+                        {{c_literal, _, 'erlang'},{c_literal, _, 'self'}} -> #opt{rule = ?RULE_SELF};
+                        {{c_literal, _, 'erlang'},{c_literal, _, '!'}} -> #opt{rule = ?RULE_SEND};
+                        _ -> #opt{rule = ?RULE_SEQ}
+                      end
                   end
               end
           end;
