@@ -109,45 +109,63 @@ eval_seq_1(Env,Exp) ->
       CallModule = cerl:call_module(Exp),
       CallName = cerl:call_name(Exp),
 
-      case is_exp(CallArgs) of
+      case is_exp(CallModule) of
         true ->
-          {NewEnv,NewCallArgs,Label} = eval_list(Env,CallArgs),
+          {NewEnv,NewCallModule,Label} = eval_seq(Env,CallModule),
           NewExp = cerl:update_c_call(Exp,
-                                      CallModule,
+                                      NewCallModule,
                                       CallName,
-                                      NewCallArgs),
+                                      CallArgs),
           {NewEnv,NewExp,Label};
         false ->
-          case {CallModule, CallName} of
-            {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} ->
-              VarNum = ref_lookup(?FRESH_VAR),
-              ref_add(?FRESH_VAR, VarNum + 1),
-              Var = utils:build_var(VarNum),
-              FunName = lists:nth(2,CallArgs),
-              % here, Core just transforms Args to a literal
-              % ({c_literal,[],[e_1,e_2]} without transforming e_1)
-              FunArgs = utils:list_from_core(lists:nth(3,CallArgs)),
-              {Env,Var,{spawn,{Var,FunName,FunArgs}}};
-            {{c_literal,_,'erlang'},{c_literal, _, 'self'}} ->
-              VarNum = ref_lookup(?FRESH_VAR),
-              ref_add(?FRESH_VAR, VarNum + 1),
-              Var = utils:build_var(VarNum),
-              {Env, Var, {self, Var}};
-            {{c_literal,_,'erlang'},{c_literal, _, '!'}} ->
-              DestPid = lists:nth(1, CallArgs),
-              MsgValue = lists:nth(2, CallArgs),
-              {Env, MsgValue, {send, DestPid, MsgValue}};
-            _ ->
-              ConcModule = cerl:concrete(CallModule),
-              ConcName = cerl:concrete(CallName),
-              ConcArgs = [cerl:concrete(Arg) || Arg <- CallArgs],
-              ConcExp = apply(ConcModule, ConcName, ConcArgs),
-              StrExp = lists:flatten(io_lib:format("~p", ([ConcExp]))) ++ ".",
-              {ok, ParsedExp, _} = erl_scan:string(StrExp),
-              {ok, TypedExp} = erl_parse:parse_exprs(ParsedExp),
-              CoreExp = hd([utils:toCore(Expr) || Expr <- TypedExp]),
-              NewExp = CoreExp,
-              {Env, NewExp, tau}
+          case is_exp(CallName) of
+            true ->
+              {NewEnv,NewCallName,Label} = eval_seq(Env,CallName),
+              NewExp = cerl:update_c_call(Exp,
+                                          CallModule,
+                                          NewCallName,
+                                          CallArgs),
+              {NewEnv,NewExp,Label};
+            false ->
+              case is_exp(CallArgs) of
+                true ->
+                  {NewEnv,NewCallArgs,Label} = eval_list(Env,CallArgs),
+                  NewExp = cerl:update_c_call(Exp,
+                                              CallModule,
+                                              CallName,
+                                              NewCallArgs),
+                  {NewEnv,NewExp,Label};
+                false ->
+                  case {CallModule, CallName} of
+                    {{c_literal,_,'erlang'},{c_literal,_,'spawn'}} ->
+                      VarNum = ref_lookup(?FRESH_VAR),
+                      ref_add(?FRESH_VAR, VarNum + 1),
+                      Var = utils:build_var(VarNum),
+                      FunName = lists:nth(2,CallArgs),
+                      FunArgs = utils:list_from_core(lists:nth(3,CallArgs)),
+                      {Env,Var,{spawn,{Var,FunName,FunArgs}}};
+                    {{c_literal,_,'erlang'},{c_literal, _, 'self'}} ->
+                      VarNum = ref_lookup(?FRESH_VAR),
+                      ref_add(?FRESH_VAR, VarNum + 1),
+                      Var = utils:build_var(VarNum),
+                      {Env, Var, {self, Var}};
+                    {{c_literal,_,'erlang'},{c_literal, _, '!'}} ->
+                      DestPid = lists:nth(1, CallArgs),
+                      MsgValue = lists:nth(2, CallArgs),
+                      {Env, MsgValue, {send, DestPid, MsgValue}};
+                    _ ->
+                      ConcModule = cerl:concrete(CallModule),
+                      ConcName = cerl:concrete(CallName),
+                      ConcArgs = [cerl:concrete(Arg) || Arg <- CallArgs],
+                      ConcExp = apply(ConcModule, ConcName, ConcArgs),
+                      StrExp = lists:flatten(io_lib:format("~p", ([ConcExp]))) ++ ".",
+                      {ok, ParsedExp, _} = erl_scan:string(StrExp),
+                      {ok, TypedExp} = erl_parse:parse_exprs(ParsedExp),
+                      CoreExp = hd([utils:toCore(Expr) || Expr <- TypedExp]),
+                      NewExp = CoreExp,
+                      {Env, NewExp, tau}
+                  end
+              end
           end
       end;
     seq ->
