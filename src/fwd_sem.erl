@@ -98,7 +98,7 @@ eval_seq_1(Env,Exp) ->
           LetEnv =
             case cerl:let_arity(Exp) of
               1 -> lists:zip(LetVars,[LetArg]);
-              _Other -> lists:zip(LetVars,LetArg)
+              _ -> lists:zip(LetVars,LetArg)
             end,
           NewEnv = utils:merge_env(Env, LetEnv),
           NewExp = cerl:let_body(Exp),
@@ -243,8 +243,6 @@ is_exp(Exp) ->
     _Other -> true
   end.
 
-eval_list(Env,[]) ->
-  {Env,[]};
 eval_list(Env,[Exp|Exps]) ->
   case is_exp(Exp) of
     true ->
