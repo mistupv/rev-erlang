@@ -27,14 +27,12 @@ eval_seq_1(Env,Exp) ->
       case is_exp(cerl:cons_hd(Exp)) of
         true ->
           {NewEnv,NewConsHdExp,Label} = eval_seq(Env,ConsHdExp),
-          NewExp = cerl:update_c_cons(Exp,
-                                      NewConsHdExp,
-                                      ConsTlExp);
+          NewExp = cerl:c_cons_skel(NewConsHdExp,
+                                    ConsTlExp);
         false ->
           {NewEnv,NewConsTlExp,Label} = eval_seq(Env,ConsTlExp),
-          NewExp = cerl:update_c_cons(Exp,
-                                      ConsHdExp,
-                                      NewConsTlExp)
+          NewExp = cerl:c_cons_skel(ConsHdExp,
+                                    NewConsTlExp)
       end,
       {NewEnv,NewExp,Label};
     values ->
@@ -43,7 +41,7 @@ eval_seq_1(Env,Exp) ->
       {NewEnv, NewExp, Label};
     tuple ->
       {NewEnv, NewTupleEs, Label} = eval_list(Env, cerl:tuple_es(Exp)),
-      NewExp = cerl:c_tuple(NewTupleEs),
+      NewExp = cerl:c_tuple_skel(NewTupleEs),
       {NewEnv, NewExp, Label};
     apply -> 
       ApplyArgs = cerl:apply_args(Exp),
