@@ -74,7 +74,12 @@ eval_seq_1(Env,Exp) ->
           {NewEnv,NewExp,Label};
         false ->
           CaseClauses = cerl:case_clauses(Exp),
-          case cerl_clauses:reduce(CaseClauses,[CaseArg]) of
+          CaseArgs =
+            case cerl:type(CaseArg) of
+              values -> cerl:values_es(CaseArg);
+              _ -> [CaseArg]
+          end,
+          case cerl_clauses:reduce(CaseClauses,CaseArgs) of
             {true,{Clause,Bindings}} ->
               ClauseBody = cerl:clause_body(Clause),
               NewEnv = utils:merge_env(Env, Bindings),
