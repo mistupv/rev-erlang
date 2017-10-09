@@ -8,8 +8,6 @@
 setup_gui() ->
   Server = wx:new(),
   Frame = wxFrame:new(Server, -1, ?APP_STRING, [{size, ?FRAME_SIZE_INIT}]),
-  % wxFrame:setMinSize(Frame, ?FRAME_SIZE_MIN),
-  % wxFrame:setMaxSize(Frame, ?FRAME_SIZE_MAX),
   ref_start(),
   ref_add(?FILE_PATH, "."),
   ref_add(?STATUS, #status{}),

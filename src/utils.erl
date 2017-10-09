@@ -9,7 +9,6 @@
          list_from_core/1,
          update_env/2, merge_env/2,
          replace/3, pp_system/1,
-         % opt_to_str/1,str_to_opt/1,
          moduleNames/1,
          stringToFunName/1,stringToCoreArgs/1, toCore/1,
          filter_options/2, filter_procs_opts/1,
@@ -240,33 +239,6 @@ pp_mail(Mail) ->
 pp_msg_mail(Val, Time) ->
   ["{",pp(Val),",",
    integer_to_list(Time),"}"].
-
-% str_to_opt(Str) ->
-%   SemStr = [lists:nth(1,Str)],
-%   TypeStr = [lists:nth(2,Str)],
-%   IdStr = string:substr(Str,3),
-%   Semantics =
-%     case SemStr of
-%       "f" -> fwd_sem;
-%       "b" -> bwd_sem
-%     end,
-%   {Type,Id} =
-%     case TypeStr of
-%       "s" -> {sched,list_to_integer(IdStr)};
-%       "p" -> {proc,cerl:c_int(list_to_integer(IdStr))}
-%     end,
-%   {Semantics,Type,Id}.
-
-% opt_to_str({Semantics,Type,Id}) ->
-%   case Semantics of
-%     fwd_sem -> "f";
-%     bwd_sem -> "b"
-%   end
-%   ++
-%   case Type of
-%     sched -> "s" ++ integer_to_list(Id);
-%     proc -> "p" ++ pp(Id)
-%   end.
 
 %%--------------------------------------------------------------------
 %% @doc Returns the module names from Forms

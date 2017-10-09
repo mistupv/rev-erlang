@@ -117,22 +117,3 @@ ref_start() ->
 ref_stop() ->
     ets:delete(?APP_REF).
 
-% eval(System) ->
-%   FwdOpts = fwd_sem:eval_opts(System),
-%   BwdOpts = bwd_sem:eval_opts(System),
-%   AllOpts = FwdOpts ++ BwdOpts,
-%   StrOpts = string:join([utils:opt_to_str(Opt) || Opt <- AllOpts]," "),
-%   io:fwrite("Available rules: ~s~n",[StrOpts]),
-%   StrOpt =
-%     case io:fread("Select rule: ","~s") of
-%       {ok,[ReadStr]} -> ReadStr;
-%       _ -> error
-%     end,
-%   {Semantics,Type,Id} = utils:str_to_opt(StrOpt),
-%   NewSystem =
-%     case Type of
-%       sched -> Semantics:eval_sched(System,Id);
-%       proc -> Semantics:eval_step(System,Id)
-%     end,
-%   io:fwrite("~s~n",[utils:pp_system(NewSystem)]),
-%   eval(NewSystem).
