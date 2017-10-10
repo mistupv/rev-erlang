@@ -483,6 +483,11 @@ loop() ->
           utils_gui:sttext_norm(StepsDone),
           refresh(),
           loop();
+        #wx{id = ?ROLL_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
+          eval_roll(),
+          % utils_gui:sttext_roll,
+          refresh(),
+          loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_INT_BUTTON) and (RuleButton =< ?BACK_SCH_BUTTON) ->
           exec_with(RuleButton),
