@@ -455,6 +455,23 @@ eval_norm() ->
   ref_add(?SYSTEM, NewSystem),
   StepsDone.
 
+eval_roll() ->
+  System = ref_lookup(?SYSTEM),
+  PidTextCtrl = ref_lookup(?ROLL_PID_TEXT),
+  PidText = wxTextCtrl:getValue(PidTextCtrl),
+  StepTextCtrl = ref_lookup(?ROLL_STEP_TEXT),
+  StepText = wxTextCtrl:getValue(StepTextCtrl),
+  {Pid, _} = string:to_integer(PidText),
+  {Steps, _} = string:to_integer(StepText),
+  case {Pid, Steps} of
+    {error, _} -> error;
+    {_, error} -> error;
+    _ ->
+      {NewSystem, StepsDone} = rev_erlang:eval_roll(System, Pid, Steps),
+      ref_add(?SYSTEM, NewSystem),
+      {StepsDone, Steps}
+  end.
+
 loop() ->
     receive
         %% ------------------- Button handlers ------------------- %%
