@@ -4,7 +4,7 @@
 %%%-------------------------------------------------------------------
 
 -module(utils).
--export([fundef_lookup/2, fundef_rename/1, build_var/1,
+-export([fundef_lookup/2, fundef_rename/1, build_var/1, pid_exists/2,
          select_proc/2, select_msg/2, select_proc_with_time/2,
          list_from_core/1,
          update_env/2, merge_env/2,
@@ -72,6 +72,12 @@ pars_rename(Vars) ->
 build_var(Num) ->
   NumAtom = list_to_atom("y_" ++ integer_to_list(Num)),
   cerl:c_var(NumAtom).
+
+pid_exists(Procs, Pid) ->
+  case [ P || P <- Procs, P#proc.pid == Pid] of
+    [] -> false;
+    _ -> true
+  end.
 
 %%--------------------------------------------------------------------
 %% @doc Returns a tuple with a process with pid Pid from Procs and
