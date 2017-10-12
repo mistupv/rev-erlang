@@ -180,7 +180,8 @@ pp_msgs(Msgs) ->
    "]"].
 
 pp_procs(Procs) ->
-  ProcsList = [pp_proc(Proc) || Proc <- Procs],
+  SortProcs = lists:sort(fun(P1, P2) -> P1#proc.pid < P2#proc.pid end, Procs),
+  ProcsList = [pp_proc(Proc) || Proc <- SortProcs],
   string:join(ProcsList," |\n").
 
 pp_msg(#msg{dest = DestPid, val = MsgValue, time = Time}) ->
