@@ -118,7 +118,8 @@ eval_roll_1(System, Pid, Steps, StepsDone, RollLog) ->
     false ->
       {System, StepsDone, RollLog};
     true ->
-      {NewSystem, NewLog} = roll:eval_step(System, Pid),
+      NewSystem = roll:eval_step(System, Pid),
+      NewLog = nothing,
       eval_roll_1(NewSystem, Pid, Steps, StepsDone + 1, RollLog ++ [NewLog])
   end.
 

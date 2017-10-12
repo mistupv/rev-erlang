@@ -467,7 +467,8 @@ eval_roll() ->
     {error, _} -> error;
     {_, error} -> error;
     _ ->
-      {NewSystem, StepsDone} = rev_erlang:eval_roll(System, Pid, Steps),
+      CorePid = cerl:c_int(Pid),
+      {NewSystem, StepsDone, Log} = rev_erlang:eval_roll(System, CorePid, Steps),
       ref_add(?SYSTEM, NewSystem),
       {StepsDone, Steps}
   end.
