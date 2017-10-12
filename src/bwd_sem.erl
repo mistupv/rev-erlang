@@ -6,7 +6,8 @@
 %%%-------------------------------------------------------------------
 
 -module(bwd_sem).
--export([eval_step/2, eval_sched/2, eval_opts/1]).
+-export([eval_step/2, eval_sched/2, eval_opts/1,
+         eval_procs_opts/1, eval_sched_opts/1]).
 
 -include("rev_erlang.hrl").
 
@@ -67,7 +68,7 @@ eval_sched_opts(#sys{procs = Procs}) ->
   lists:filter(fun (X) ->
                   case X of
                     ?NULL_OPT -> false;
-                    _Other -> true
+                    _ -> true
                   end
                 end, Opts).
 
@@ -98,14 +99,14 @@ eval_proc_opt(#sys{msgs = Msgs, procs = RestProcs}, CurProc) ->
                                         M#msg.val == MsgValue ],
             case MsgList of
               [] -> ?NULL_RULE;
-              _Other -> ?RULE_SEND
+              _ -> ?RULE_SEND
             end;
           {spawn,_,_,SpawnPid} ->
             {SpawnProc, _RestProcs} = utils:select_proc(RestProcs, SpawnPid),
             #proc{hist = SpawnHist, mail = SpawnMail} = SpawnProc,
             case {SpawnHist, SpawnMail} of
               {[], []} -> ?RULE_SPAWN;
-              _Other -> ?NULL_RULE
+              _ -> ?NULL_RULE
             end;
           {rec,_,_, ConsMsg, OldMail} ->
             Mail = CurProc#proc.mail,
