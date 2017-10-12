@@ -13,7 +13,7 @@
          stringToFunName/1,stringToCoreArgs/1, toCore/1,
          filter_options/2, filter_procs_opts/1,
          has_fwd/1, has_bwd/1, has_norm/1,
-         is_queue_minus_msg/3, topmost_rec/1]).
+         is_queue_minus_msg/3, topmost_rec/1, topmost_send/1]).
 
 -include("rev_erlang.hrl").
 
@@ -379,6 +379,13 @@ topmost_rec([CurHist|RestHist]) ->
   case CurHist of
     {rec,_,_,_,_} -> CurHist;
     _Other -> topmost_rec(RestHist)
+  end.
+
+topmost_send([]) -> no_send;
+topmost_send([CurHist|RestHist]) ->
+  case CurHist of
+    {send,_,_,_,_} -> CurHist;
+    _Other -> topmost_send(RestHist)
   end.
 
 fresh_var() ->
