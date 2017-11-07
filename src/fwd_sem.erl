@@ -161,7 +161,7 @@ eval_seq_1(Env,Exp) ->
                     _ ->
                       ConcModule = cerl:concrete(CallModule),
                       ConcName = cerl:concrete(CallName),
-                      ConcArgs = [cerl:concrete(Arg) || Arg <- CallArgs],
+                      ConcArgs = [utils:toErlang(Arg) || Arg <- CallArgs],
                       ConcExp = apply(ConcModule, ConcName, ConcArgs),
                       StrExp = lists:flatten(io_lib:format("~p", ([ConcExp]))) ++ ".",
                       {ok, ParsedExp, _} = erl_scan:string(StrExp),
