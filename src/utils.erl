@@ -10,7 +10,7 @@
          update_env/2, merge_env/2,
          replace/3, pp_system/1,
          moduleNames/1,
-         stringToFunName/1,stringToCoreArgs/1, toCore/1,
+         stringToFunName/1,stringToCoreArgs/1, toCore/1, toErlang/1,
          filter_options/2, filter_procs_opts/1,
          has_fwd/1, has_bwd/1, has_norm/1,
          is_queue_minus_msg/3, topmost_rec/1]).
@@ -306,6 +306,14 @@ toCore(Expr) ->
     {nil, _} ->
       cerl:c_nil()
   end.
+
+toErlang(Expr) ->
+  LitExpr =
+    case cerl:is_literal(Expr) of
+      true -> Expr;
+      false -> cerl:fold_literal(Expr)
+    end,
+  cerl:concrete(LitExpr).
 
 %%--------------------------------------------------------------------
 %% @doc Filters the options with identifier Id
