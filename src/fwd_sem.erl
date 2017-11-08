@@ -260,7 +260,7 @@ eval_sched(#sys{msgs = Msgs, procs = Procs}, Id) ->
   #msg{dest = DestPid, val = Value, time = Time} = Msg,
   {Proc, RestProcs} = utils:select_proc(Procs, DestPid),
   #proc{mail = Mail} = Proc,
-  NewMail = [{Value, Time}|Mail],
+  NewMail = Mail ++ [{Value, Time}],
   NewProc = Proc#proc{mail = NewMail},
   #sys{msgs = RestMsgs, procs = [NewProc|RestProcs]}.
 
