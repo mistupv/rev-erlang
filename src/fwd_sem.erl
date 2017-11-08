@@ -166,6 +166,9 @@ eval_seq_1(Env,Exp) ->
                       DestPid = lists:nth(1, CallArgs),
                       MsgValue = lists:nth(2, CallArgs),
                       {Env, MsgValue, {send, DestPid, MsgValue}};
+                    {{c_literal,_,'timer'},{c_literal,_,'sleep'}} ->
+                      NewExp = cerl:c_atom('ok'),
+                      {Env, NewExp, tau};
                     _ ->
                       ConcModule = cerl:concrete(CallModule),
                       ConcName = cerl:concrete(CallName),
