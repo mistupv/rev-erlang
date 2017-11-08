@@ -58,7 +58,8 @@ eval_step(System, Option) ->
       ?TYPE_MSG -> Semantics:eval_sched(System,Id);
       ?TYPE_PROC -> Semantics:eval_step(System,cerl:c_int(Id))
     end,
-  NewSystem.
+  NewTrace = System#sys.trace ++ [Option],
+  NewSystem#sys{trace = NewTrace}.
 
 %%--------------------------------------------------------------------
 %% @doc Performs Steps evaluation steps in System in

@@ -55,10 +55,12 @@
               time}).
 
 -record(sys, {msgs  = [],
-              procs = []}).
+              procs = [],
+              trace = []}).
 
 
 -record(opt, {sem,    % forward or backward
               type,   % proc or msg
               id,     % integer
               rule}). % seq, spawn, ...
+
