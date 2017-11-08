@@ -4,7 +4,7 @@
          disable_rule_buttons/1, set_button_label_if/2, set_ref_button_if/2,
          set_choices/1, stop_refs/0, update_status_text/1,
          sttext_single/1, sttext_mult/2, sttext_norm/1,
-         prev_font_size/1, next_font_size/1]).
+         prev_font_size/1, next_font_size/1, sort_opts/1]).
 
 -include("rev_erlang.hrl").
 -include("rev_erlang_gui.hrl").
