@@ -121,10 +121,9 @@ select_proc_with_time(Procs, Time) ->
 %% @end
 %%--------------------------------------------------------------------
 list_from_core(Exp) ->
-  case cerl:type(Exp) of
-    cons ->
-      [cerl:cons_hd(Exp)|list_from_core(cerl:cons_tl(Exp))];
-    literal -> [] % Exp == cerl:c_nil()
+  case  cerl:is_c_nil(Exp) of
+    true -> [];
+    false -> [cerl:cons_hd(Exp)|list_from_core(cerl:cons_tl(Exp))]
   end.
 
 %%--------------------------------------------------------------------
