@@ -103,7 +103,14 @@ eval_seq_1(Env,Exp) ->
           LetEnv =
             case cerl:let_arity(Exp) of
               1 -> lists:zip(LetVars,[LetArg]);
-              _ -> lists:zip(LetVars,LetArg)
+              _ ->
+                FlatLetArg =
+                case cerl:type(LetArg) of
+                  values ->
+                    cerl:values_es(LetArg);
+                  _ -> LetArg
+                end,
+                lists:zip(LetVars,FlatLetArg)
             end,
           NewEnv = utils:merge_env(Env, LetEnv),
           NewExp = cerl:let_body(Exp),
