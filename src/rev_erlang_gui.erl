@@ -214,9 +214,11 @@ setupAutoPanel(Parent) ->
   wxButton:disable(ForwardButton),
   wxButton:disable(BackwardButton),
   wxButton:disable(NormalizeButton),
+  wxButton:disable(RollButton),
   ref_add(?FORWARD_BUTTON, ForwardButton),
   ref_add(?BACKWARD_BUTTON, BackwardButton),
   ref_add(?NORMALIZE_BUTTON, NormalizeButton),
+  ref_add(?ROLL_BUTTON, RollButton),
 
   AutoSizer = wxBoxSizer:new(?wxVERTICAL),
   StepSizer = wxBoxSizer:new(?wxHORIZONTAL),
@@ -387,6 +389,24 @@ refresh_buttons(Options) ->
   utils_gui:set_ref_button_if(?BACKWARD_BUTTON, HasBwdOptions),
   utils_gui:set_ref_button_if(?NORMALIZE_BUTTON, HasNormOptions).
 
+disable_all_buttons() ->
+  ForwIntButton   = ref_lookup(?FORW_INT_BUTTON),
+  ForwSchButton   = ref_lookup(?FORW_SCH_BUTTON),
+  BackIntButton   = ref_lookup(?BACK_INT_BUTTON),
+  BackSchButton   = ref_lookup(?BACK_SCH_BUTTON),
+  ForwardButton   = ref_lookup(?FORWARD_BUTTON),
+  BackwardButton  = ref_lookup(?BACKWARD_BUTTON),
+  NormalizeButton = ref_lookup(?NORMALIZE_BUTTON),
+  %RollButton      = ref_lookup(?ROLL_BUTTON),
+  wxButton:disable(ForwIntButton),
+  wxButton:disable(ForwSchButton),
+  wxButton:disable(BackIntButton),
+  wxButton:disable(BackSchButton),
+  wxButton:disable(ForwardButton),
+  wxButton:disable(BackwardButton),
+  wxButton:disable(NormalizeButton).
+  %wxButton:disable(RollButton).
+
 refresh() ->
   case utils_gui:is_app_running() of
     false -> ok;
@@ -480,23 +500,27 @@ loop() ->
           start(),
           loop();
         #wx{id = ?NORMALIZE_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
+          disable_all_buttons(),
           StepsDone = eval_norm(),
           utils_gui:sttext_norm(StepsDone),
           refresh(),
           loop();
         #wx{id = ?ROLL_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
+          disable_all_buttons(),
           eval_roll(),
           % utils_gui:sttext_roll,
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton >= ?FORW_INT_BUTTON) and (RuleButton =< ?BACK_SCH_BUTTON) ->
+          disable_all_buttons(),
           exec_with(RuleButton),
           utils_gui:sttext_single(RuleButton),
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}
           when (RuleButton == ?FORWARD_BUTTON) or (RuleButton == ?BACKWARD_BUTTON) ->
+          disable_all_buttons(),
           case eval_mult(RuleButton) of
             error ->
               utils_gui:update_status_text(?ERROR_NUM_STEP);
