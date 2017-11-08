@@ -75,8 +75,14 @@ eval_mult_1(System, Option, Steps, StepsDone) ->
     case Option of
       ?MULT_FWD -> fwd_sem;
       ?MULT_BWD -> bwd_sem
-    end,  
-  Opts = Sem:eval_opts(System),
+    end,
+  % Process reductions are given a higher
+  % priority so that we obtain a fairer scheduling
+  Opts =
+    case Sem:eval_procs_opts(System) of
+      [] -> Sem:eval_sched_opts(System);
+      ProcsOpts -> ProcsOpts
+    end,
   case Opts of
     [] ->
       {System, StepsDone};
