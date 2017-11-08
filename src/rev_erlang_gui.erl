@@ -38,7 +38,7 @@ setupMainPanel(Parent) ->
   wxWindow:setSizerAndFit(RightPanel, RightSizer),
 
   wxSizer:add(MainSizer, LeftPanel, SizerFlags),
-  wxSizer:add(MainSizer, RightPanel),
+  wxSizer:add(MainSizer, RightPanel, SizerFlags),
   wxWindow:setSizer(MainPanel, MainSizer),
   MainPanel.
 
@@ -112,9 +112,25 @@ setupCodePanel(Parent) ->
   wxWindow:setSizer(StatePanel, BorderSizer),
   StatePanel.
 
+setupTracePanel(Parent) ->
+  TracePanel = wxPanel:new(Parent),
+  TraceText = wxTextCtrl:new(TracePanel, ?TRACE_TEXT,
+                             [{style, ?wxTE_MULTILINE bor ?wxTE_READONLY}]),
+  ref_add(?TRACE_TEXT, TraceText),
+  TraceSizer = wxBoxSizer:new(?wxVERTICAL),
+  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
+  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
+  wxSizer:add(TraceSizer, TraceText, SizerFlags),
+  wxSizer:add(BorderSizer, TraceSizer, [{flag, ?wxALL bor ?wxEXPAND},
+                                        {proportion, 1}, {border, 10}]),
+  wxWindow:setSizer(TracePanel, BorderSizer),
+  TracePanel.
+
 setupRightSizer(Parent) ->
   Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),
+  BottomNotebook = wxNotebook:new(Parent, ?RIGHT_BOTTOM_NOTEBOOK),
   ref_add(?RIGHT_NOTEBOOK, Notebook),
+  ref_add(?RIGHT_BOTTOM_NOTEBOOK, BottomNotebook),
   ManuPanel = setupManualPanel(Notebook),
   % SemiPanel = setupSemiPanel(Notebook),
   AutoPanel = setupAutoPanel(Notebook),
@@ -122,9 +138,13 @@ setupRightSizer(Parent) ->
   % wxNotebook:addPage(Notebook, SemiPanel, "Semi"),
   wxNotebook:addPage(Notebook, AutoPanel, "Automatic"),
   % wxNotebook:layout(Notebook),
+  TracePanel = setupTracePanel(BottomNotebook),
+  wxNotebook:addPage(BottomNotebook, TracePanel, "Trace"),
   RightSizer = wxBoxSizer:new(?wxVERTICAL),
   SizerFlags = [{proportion, 0}, {flag, ?wxEXPAND}],
+  BottomSizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
   wxSizer:add(RightSizer, Notebook, SizerFlags),
+  wxSizer:add(RightSizer, BottomNotebook, BottomSizerFlags),
   RightSizer.
 
 setupManualPanel(Parent) ->
@@ -214,7 +234,7 @@ setupAutoPanel(Parent) ->
   wxButton:disable(ForwardButton),
   wxButton:disable(BackwardButton),
   wxButton:disable(NormalizeButton),
-  wxButton:disable(RollButton),
+  %wxButton:disable(RollButton),
   ref_add(?FORWARD_BUTTON, ForwardButton),
   ref_add(?BACKWARD_BUTTON, BackwardButton),
   ref_add(?NORMALIZE_BUTTON, NormalizeButton),

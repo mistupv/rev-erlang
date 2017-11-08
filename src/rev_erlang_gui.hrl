@@ -40,6 +40,8 @@
 -define(FUN_CHOICE,     531).
 -define(LEFT_NOTEBOOK,  540).
 -define(RIGHT_NOTEBOOK, 541).
+-define(RIGHT_BOTTOM_NOTEBOOK, 541).
+-define(TRACE_TEXT,     550).
 
 -define(PAGEPOS_CODE,  0).
 -define(PAGEPOS_STATE, 1).
