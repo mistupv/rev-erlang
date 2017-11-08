@@ -208,7 +208,9 @@ eval_seq_1(Env,Exp) ->
 %% @doc Performs an evaluation step in process Pid, given System
 %% @end
 %%--------------------------------------------------------------------
-eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
+eval_step(System, Pid) ->
+  Msgs = System#sys.msgs,
+  Procs = System#sys.procs,
   {Proc, RestProcs} = utils:select_proc(Procs, Pid),
   #proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail} = Proc,
   {NewEnv, NewExp, Label} = eval_seq(Env, Exp),
@@ -221,7 +223,7 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         NewHist = [{self, Env, Exp}|Hist],
         RepExp = utils:replace(Var, Pid, NewExp),
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
-        #sys{msgs = Msgs, procs = [NewProc|RestProcs]};
+        System#sys{msgs = Msgs, procs = [NewProc|RestProcs]};
       {send, DestPid, MsgValue} ->
         Time = ref_lookup(?FRESH_TIME),
         ref_add(?FRESH_TIME, Time + 1),
@@ -229,7 +231,7 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         NewMsgs = [NewMsg|Msgs],
         NewHist = [{send, Env, Exp, DestPid, {MsgValue, Time}}|Hist],
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = NewExp},
-        #sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
+        System#sys{msgs = NewMsgs, procs = [NewProc|RestProcs]};
       {spawn, {Var, FunName, FunArgs}} ->
         PidNum = ref_lookup(?FRESH_PID),
         ref_add(?FRESH_PID, PidNum + 1),
@@ -240,14 +242,14 @@ eval_step(#sys{msgs = Msgs, procs = Procs}, Pid) ->
         NewHist = [{spawn, Env, Exp, SpawnPid}|Hist],
         RepExp = utils:replace(Var, SpawnPid, NewExp),
         NewProc = Proc#proc{hist = NewHist, env = NewEnv, exp = RepExp},
-        #sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
+        System#sys{msgs = Msgs, procs = [NewProc|[SpawnProc|RestProcs]]};
       {rec, Var, ReceiveClauses} ->
         {Bindings, RecExp, ConsMsg, NewMail} = matchrec(ReceiveClauses, Mail),
         UpdatedEnv = utils:merge_env(NewEnv, Bindings),
         RepExp = utils:replace(Var, RecExp, NewExp),
         NewHist = [{rec, Env, Exp, ConsMsg, Mail}|Hist],
         NewProc = Proc#proc{hist = NewHist, env = UpdatedEnv, exp = RepExp, mail = NewMail},
-        #sys{msgs = Msgs, procs = [NewProc|RestProcs]}        
+        System#sys{msgs = Msgs, procs = [NewProc|RestProcs]}
     end,
   NewSystem.
 
