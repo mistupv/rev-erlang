@@ -370,7 +370,7 @@ refresh_buttons(Options) ->
   PidTextCtrl = ref_lookup(?PID_TEXT),
   PidText = wxTextCtrl:getValue(PidTextCtrl),
   ManualButtons = lists:seq(?FORW_INT_BUTTON, ?BACK_SCH_BUTTON),
-  ?LOG("full options: " ++ ?TO_STRING(Options)),
+  ?LOG("full options: " ++ ?TO_STRING(utils_gui:sort_opts(Options))),
   case string:to_integer(PidText) of
     {error, _} ->
       utils_gui:disable_rule_buttons(ManualButtons);

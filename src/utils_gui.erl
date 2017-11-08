@@ -172,5 +172,9 @@ next_font_size(CurSize) ->
     false -> lists:nth(SizeIdx + 1, ?FONT_SIZES)
   end.
 
+sort_opts(Opts) ->
+  SortOpts = lists:sort(fun(P1, P2) -> P1#opt.id < P2#opt.id end, Opts),
+  SortOpts.
+
 ref_lookup(Id) ->
     ets:lookup_element(?GUI_REF, Id, 2).
