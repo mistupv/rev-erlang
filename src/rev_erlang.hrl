@@ -58,9 +58,12 @@
               procs = [],
               trace = []}).
 
-
 -record(opt, {sem,    % forward or backward
               type,   % proc or msg
               id,     % integer
               rule}). % seq, spawn, ...
 
+-record(trace, {type,
+                from,
+                to,
+                val}).
