@@ -38,7 +38,7 @@ setupMainPanel(Parent) ->
   wxWindow:setSizerAndFit(RightPanel, RightSizer),
 
   wxSizer:add(MainSizer, LeftPanel, SizerFlags),
-  wxSizer:add(MainSizer, RightPanel, SizerFlags),
+  wxSizer:add(MainSizer, RightPanel),
   wxWindow:setSizer(MainPanel, MainSizer),
   MainPanel.
 
@@ -112,25 +112,9 @@ setupCodePanel(Parent) ->
   wxWindow:setSizer(StatePanel, BorderSizer),
   StatePanel.
 
-setupTracePanel(Parent) ->
-  TracePanel = wxPanel:new(Parent),
-  TraceText = wxTextCtrl:new(TracePanel, ?TRACE_TEXT,
-                             [{style, ?wxTE_MULTILINE bor ?wxTE_READONLY}]),
-  ref_add(?TRACE_TEXT, TraceText),
-  TraceSizer = wxBoxSizer:new(?wxVERTICAL),
-  BorderSizer = wxBoxSizer:new(?wxVERTICAL),
-  SizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
-  wxSizer:add(TraceSizer, TraceText, SizerFlags),
-  wxSizer:add(BorderSizer, TraceSizer, [{flag, ?wxALL bor ?wxEXPAND},
-                                        {proportion, 1}, {border, 10}]),
-  wxWindow:setSizer(TracePanel, BorderSizer),
-  TracePanel.
-
 setupRightSizer(Parent) ->
   Notebook = wxNotebook:new(Parent, ?RIGHT_NOTEBOOK),
-  BottomNotebook = wxNotebook:new(Parent, ?RIGHT_BOTTOM_NOTEBOOK),
   ref_add(?RIGHT_NOTEBOOK, Notebook),
-  ref_add(?RIGHT_BOTTOM_NOTEBOOK, BottomNotebook),
   ManuPanel = setupManualPanel(Notebook),
   % SemiPanel = setupSemiPanel(Notebook),
   AutoPanel = setupAutoPanel(Notebook),
@@ -138,13 +122,9 @@ setupRightSizer(Parent) ->
   % wxNotebook:addPage(Notebook, SemiPanel, "Semi"),
   wxNotebook:addPage(Notebook, AutoPanel, "Automatic"),
   % wxNotebook:layout(Notebook),
-  TracePanel = setupTracePanel(BottomNotebook),
-  wxNotebook:addPage(BottomNotebook, TracePanel, "Trace"),
   RightSizer = wxBoxSizer:new(?wxVERTICAL),
   SizerFlags = [{proportion, 0}, {flag, ?wxEXPAND}],
-  BottomSizerFlags = [{proportion, 1}, {flag, ?wxEXPAND}],
   wxSizer:add(RightSizer, Notebook, SizerFlags),
-  wxSizer:add(RightSizer, BottomNotebook, BottomSizerFlags),
   RightSizer.
 
 setupManualPanel(Parent) ->
@@ -208,19 +188,9 @@ setupManualPanel(Parent) ->
 setupAutoPanel(Parent) ->
   AutoPanel = wxPanel:new(Parent),
   StepStaticText = wxStaticText:new(AutoPanel, ?wxID_ANY, "Steps:"),
-  RollPidStaticText = wxStaticText:new(AutoPanel, ?wxID_ANY, "Pid:"),
-  RollStepStaticText = wxStaticText:new(AutoPanel, ?wxID_ANY, "Steps:"),
   StepTextCtrl = wxTextCtrl:new(AutoPanel, ?STEP_TEXT, [{style,?wxBOTTOM}]),
-  RollPidTextCtrl = wxTextCtrl:new(AutoPanel, ?ROLL_PID_TEXT, [{style,?wxBOTTOM},
-                                                               {size, {40, -1}}]),
-  RollStepTextCtrl = wxTextCtrl:new(AutoPanel, ?ROLL_STEP_TEXT, [{style,?wxBOTTOM},
-                                                                 {size, {40, -1}}]),
   ref_add(?STEP_TEXT, StepTextCtrl),
-  ref_add(?ROLL_PID_TEXT, RollPidTextCtrl),
-  ref_add(?ROLL_STEP_TEXT, RollStepTextCtrl),
   HorizontalLine = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL},
-                                                {size, {200, -1}}]),
-  HorizontalLine2 = wxStaticLine:new(AutoPanel, [{style, ?wxLI_HORIZONTAL},
                                                 {size, {200, -1}}]),
   ForwardButton = wxButton:new(AutoPanel, ?FORWARD_BUTTON,
                                [{label, "Forward"}]),
@@ -228,23 +198,19 @@ setupAutoPanel(Parent) ->
                                 [{label, "Backward"}]),
   NormalizeButton = wxButton:new(AutoPanel, ?NORMALIZE_BUTTON,
                                 [{label, "Normalize"}]),
-  RollButton = wxButton:new(AutoPanel, ?ROLL_BUTTON,
-                                [{label, "Roll"},
-                                 {size, {40, -1}}]),
+
   wxButton:disable(ForwardButton),
   wxButton:disable(BackwardButton),
   wxButton:disable(NormalizeButton),
-  %wxButton:disable(RollButton),
+
   ref_add(?FORWARD_BUTTON, ForwardButton),
   ref_add(?BACKWARD_BUTTON, BackwardButton),
   ref_add(?NORMALIZE_BUTTON, NormalizeButton),
-  ref_add(?ROLL_BUTTON, RollButton),
 
   AutoSizer = wxBoxSizer:new(?wxVERTICAL),
   StepSizer = wxBoxSizer:new(?wxHORIZONTAL),
   StepButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
   SchedButtonSizer = wxBoxSizer:new(?wxHORIZONTAL),
-  RollSizer = wxBoxSizer:new(?wxHORIZONTAL),
   BorderSizer = wxBoxSizer:new(?wxVERTICAL),
 
   wxSizer:add(AutoSizer, StepSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
@@ -253,9 +219,6 @@ setupAutoPanel(Parent) ->
   wxSizer:add(AutoSizer, HorizontalLine, [{flag, ?wxTOP bor ?wxBOTTOM},
                                           {border, 15}]),
   wxSizer:add(AutoSizer, SchedButtonSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
-  wxSizer:add(AutoSizer, HorizontalLine2, [{flag, ?wxTOP bor ?wxBOTTOM},
-                                          {border, 15}]),
-  wxSizer:add(AutoSizer, RollSizer, [{flag, ?wxALIGN_CENTER_HORIZONTAL}]),
 
   wxSizer:add(StepSizer, StepStaticText),
   wxSizer:add(StepSizer, StepTextCtrl),
@@ -265,14 +228,6 @@ setupAutoPanel(Parent) ->
   wxSizer:add(StepButtonSizer, BackwardButton),
 
   wxSizer:add(SchedButtonSizer, NormalizeButton),
-
-  wxSizer:add(RollSizer, RollPidStaticText),
-  wxSizer:add(RollSizer, RollPidTextCtrl),
-  wxSizer:addSpacer(RollSizer, 5),
-  wxSizer:add(RollSizer, RollStepStaticText),
-  wxSizer:add(RollSizer, RollStepTextCtrl),
-  wxSizer:addSpacer(RollSizer, 5),
-  wxSizer:add(RollSizer, RollButton),
 
   wxSizer:add(BorderSizer, AutoSizer, [{flag, ?wxALL bor ?wxALIGN_CENTER_HORIZONTAL}, {border, 10}]),
   wxWindow:setSizer(AutoPanel, BorderSizer),
@@ -417,7 +372,6 @@ disable_all_buttons() ->
   ForwardButton   = ref_lookup(?FORWARD_BUTTON),
   BackwardButton  = ref_lookup(?BACKWARD_BUTTON),
   NormalizeButton = ref_lookup(?NORMALIZE_BUTTON),
-  %RollButton      = ref_lookup(?ROLL_BUTTON),
   wxButton:disable(ForwIntButton),
   wxButton:disable(ForwSchButton),
   wxButton:disable(BackIntButton),
@@ -425,7 +379,6 @@ disable_all_buttons() ->
   wxButton:disable(ForwardButton),
   wxButton:disable(BackwardButton),
   wxButton:disable(NormalizeButton).
-  %wxButton:disable(RollButton).
 
 refresh() ->
   case utils_gui:is_app_running() of
@@ -495,24 +448,6 @@ eval_norm() ->
   ref_add(?SYSTEM, NewSystem),
   StepsDone.
 
-eval_roll() ->
-  System = ref_lookup(?SYSTEM),
-  PidTextCtrl = ref_lookup(?ROLL_PID_TEXT),
-  PidText = wxTextCtrl:getValue(PidTextCtrl),
-  StepTextCtrl = ref_lookup(?ROLL_STEP_TEXT),
-  StepText = wxTextCtrl:getValue(StepTextCtrl),
-  {Pid, _} = string:to_integer(PidText),
-  {Steps, _} = string:to_integer(StepText),
-  case {Pid, Steps} of
-    {error, _} -> error;
-    {_, error} -> error;
-    _ ->
-      CorePid = cerl:c_int(Pid),
-      {NewSystem, StepsDone, Log} = rev_erlang:eval_roll(System, CorePid, Steps),
-      ref_add(?SYSTEM, NewSystem),
-      {StepsDone, Steps}
-  end.
-
 loop() ->
     receive
         %% ------------------- Button handlers ------------------- %%
@@ -523,12 +458,6 @@ loop() ->
           disable_all_buttons(),
           StepsDone = eval_norm(),
           utils_gui:sttext_norm(StepsDone),
-          refresh(),
-          loop();
-        #wx{id = ?ROLL_BUTTON, event = #wxCommand{type = command_button_clicked}} ->
-          disable_all_buttons(),
-          eval_roll(),
-          % utils_gui:sttext_roll,
           refresh(),
           loop();
         #wx{id = RuleButton, event = #wxCommand{type = command_button_clicked}}

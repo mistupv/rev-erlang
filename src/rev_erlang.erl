@@ -6,10 +6,8 @@
 %%%-------------------------------------------------------------------
 
 -module(rev_erlang).
--export([start/0,
-         start_refs/1, stop_refs/0,
-         eval_opts/1, eval_step/2, eval_mult/3, eval_norm/1,
-         eval_roll/3]).
+-export([start/0, start_refs/1, stop_refs/0,
+         eval_opts/1, eval_step/2, eval_mult/3, eval_norm/1]).
 
 -include("rev_erlang.hrl").
 
@@ -113,21 +111,6 @@ eval_norm_1(System, Steps) ->
       RandOpt = lists:nth(RandIdx, ProcsOpts),
       NewSystem = eval_step(System, RandOpt),
       eval_norm_1(NewSystem, Steps + 1)
-  end.
-
-eval_roll(System, Pid, Steps) ->
-  eval_roll_1(System, Pid, Steps, 0, []).
-
-eval_roll_1(System, _Pid, Steps, Steps, RollLog) ->
-  {System, Steps, RollLog};
-eval_roll_1(System, Pid, Steps, StepsDone, RollLog) ->
-  case roll:can_roll(System, Pid) of
-    false ->
-      {System, StepsDone, RollLog};
-    true ->
-      NewSystem = roll:eval_step(System, Pid),
-      NewLog = nothing,
-      eval_roll_1(NewSystem, Pid, Steps, StepsDone + 1, RollLog ++ [NewLog])
   end.
 
 ref_add(Id, Ref) ->

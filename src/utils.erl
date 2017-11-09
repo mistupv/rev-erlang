@@ -201,38 +201,39 @@ pp_proc(#proc{pid = Pid, hist = Hist, env = Env, exp = Exp, mail = Mail}) ->
 
 pp(CoreForm) -> core_pp:format(CoreForm).
 
-pp_env(_) -> "{}".
-% pp_env([]) -> "{}";
-% pp_env(Env) ->
-%   PairsList = [pp_pair(Var,Val) || {Var,Val} <- Env],
-%   ["{",
-%    string:join(PairsList,", "),
-%    "}"].
+pp_env([]) -> "{}";
+pp_env(Env) ->
+  PairsList = [pp_pair(Var,Val) || {Var,Val} <- Env],
+  ["{",
+   string:join(PairsList,", "),
+   "}"].
 
 pp_pair(Var,Val) ->
   [pp(Var)," -> ",pp(Val)].
 
-is_send_rec({send,_,_,_,_}) -> true;
-is_send_rec({rec,_,_,_,_}) -> true;
-is_send_rec(_) -> false.
-
-pp_hist(Hist) ->
-  FiltHist = lists:filter(fun is_send_rec/1, Hist),
-  ["[",pp_hist_1(FiltHist)].
-
-pp_hist_1([]) -> "]";
-pp_hist_1([LastHist]) -> [pp_hist_2(LastHist),"]"];
-pp_hist_1([CurHist|RestHist]) ->
-  [pp_hist_2(CurHist),pp_hist_3(CurHist),pp_hist_1(RestHist)].
-
-pp_hist_2({send,_,_,_,{Value,Time}}) ->
-  ["send(",pp(Value),",",integer_to_list(Time),")"];
-pp_hist_2({rec,_,_,{Value,Time},_}) ->
-  ["rec(",pp(Value),",",integer_to_list(Time),")"].
-
-pp_hist_3({send,_,_,_,_}) -> ",";
-pp_hist_3({rec,_,_,_,_}) -> ",";
-pp_hist_3(_) -> "".
+pp_hist([]) -> "[]";
+pp_hist([CurHist|_RestHist]) ->
+  case CurHist of
+    {tau,_,_} ->
+      ["tau(t,e):hs"];
+    {self,_,_} ->
+      ["self(t,e):hs"];
+    {send,_,_,DestPid,{Value,Time}} ->
+      ["send(t,e,",
+       pp(DestPid),",{",
+       pp(Value),",",
+       integer_to_list(Time),
+       "}):hs"];
+    {spawn,_,_,SpawnPid} ->
+      ["spawn(t,e,",
+       pp(SpawnPid),
+       "):hs"];
+    {rec,_,_,{Value,Time},_} ->
+      ["rec(t,e,{",
+       pp(Value),",",
+       integer_to_list(Time),
+       "},q):hs"]
+  end.
 
 pp_mail([]) -> "[]";
 pp_mail(Mail) ->
